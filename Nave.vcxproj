@@ -145,14 +145,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GameObject.cpp" />
     <ClCompile Include="src\ShaderProgram.cpp" />
     <ClCompile Include="src\Nave.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\GameObject.h" />
     <ClInclude Include="src\ShaderProgram.h" />
+    <ClInclude Include="src\Shaders\Debug_LocalPosition.frag" />
     <ClInclude Include="src\WindowInfo.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Shaders\LocalPosition.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
