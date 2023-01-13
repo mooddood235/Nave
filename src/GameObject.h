@@ -8,10 +8,11 @@ enum class Space {
 
 class GameObject{
 public:
-	void Translate(glm::vec3 translation);
+	void Translate(glm::vec3 translation, Space space = Space::global);
 	void Scale(glm::vec3 scale);
 	void Rotate(float angleInDegrees, glm::vec3 axis, Space space = Space::global);
-private:
+	glm::mat4 GetModelMatrix();
+protected:
 	glm::mat4 translationMatrix = glm::mat4(1);
 	glm::mat4 scaleMatrix = glm::mat4(1);
 	glm::mat4 rotationMatrix = glm::mat4(1);
