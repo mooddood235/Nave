@@ -1,12 +1,23 @@
 #include "ShaderProgram.h"
 #include <sstream>
 #include <GLFW/glfw3.h>
+#include <glm/gtc/type_ptr.hpp>
 
 ShaderProgram::ShaderProgram(std::string vertPath, std::string fragPath) {
 	shaderProgram = LinkProgram(CompileShader(vertPath, GL_VERTEX_SHADER), CompileShader(fragPath, GL_FRAGMENT_SHADER));
 }
 ShaderProgram::~ShaderProgram() {
 	glDeleteProgram(shaderProgram);
+}
+void ShaderProgram::Use() {
+	glUseProgram(shaderProgram);
+}
+void ShaderProgram::Unuse() {
+	glUseProgram(0);
+}
+void ShaderProgram::SetMat4(std::string uniformName, glm::mat4 value) {
+	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
+	glProgramUniformMatrix4fv(shaderProgram, location, 1, GL_FALSE, glm::value_ptr(value));
 }
 unsigned int ShaderProgram::CompileShader(std::string path, GLenum type) {
 	if (!(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER)) {

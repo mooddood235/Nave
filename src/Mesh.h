@@ -1,9 +1,11 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <vector>
+
+#include "GameObject.h"
 #include "Vertex.h"
 
-class Mesh{
+class Mesh : public GameObject{
 public:
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
 	~Mesh();
