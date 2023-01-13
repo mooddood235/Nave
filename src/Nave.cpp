@@ -6,7 +6,7 @@
 
 #include "WindowInfo.h"
 #include "ShaderProgram.h"
-#include "Mesh.h"
+#include "Model.h"
 #include "Vertex.h"
 #include "Camera.h"
 
@@ -27,39 +27,34 @@ int main()
     InitGLFW();
     InitGlAD();
 
-    float currentTime = 0;
-
     glEnable(GL_FRAMEBUFFER_SRGB);
+    glEnable(GL_DEPTH_TEST);
 
     ShaderProgram shader = ShaderProgram("src/Shaders/Model.vert", "src/Shaders/Debug_LocalPosition.frag");
 
-    std::vector<Vertex> vertices = {
-        Vertex(glm::vec3(-1, -1, 0), glm::vec3(0)),
-        Vertex(glm::vec3(1, -1, 0), glm::vec3(0)),
-        Vertex(glm::vec3(0, 1, 0), glm::vec3(0))
-    };
-    std::vector<unsigned int> indices = { 0, 1, 2 };
-
-    Mesh triangle = Mesh(vertices, indices);
-    triangle.Translate(glm::vec3(0, 0, -8));
     Camera camera = Camera(45.0f, 0.1f, 100.0f);
+    camera.Translate(glm::vec3(0, 0, 8));
+
+    Model cube = Model("Models/Cube/Cube.fbx");
 
     while (!glfwWindowShouldClose(window)) {
+        // Setup
         UpdateDeltaTime();
         glfwSwapBuffers(window);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glfwPollEvents();
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
-        
+       
         camera.ProcessInput();
 
-        shader.SetMat4("modelMatrix", triangle.GetModelMatrix());
+        // Draw Models
+        shader.SetMat4("modelMatrix", cube.GetModelMatrix());
         shader.SetMat4("viewMatrix", camera.GetViewMatrix());
         shader.SetMat4("projectionMatrix", camera.GetProjectionMatrix());
 
         shader.Use();
-        triangle.Draw();
+        cube.Draw();
         ShaderProgram::Unuse();
     }
     glfwTerminate();

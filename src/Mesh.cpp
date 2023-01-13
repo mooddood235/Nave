@@ -7,11 +7,6 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) {
 	this->indices = indices;
 	GenerateMesh();
 }
-Mesh::~Mesh() {
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(1, &vbo);
-	glDeleteBuffers(1, &ebo);
-}
 void Mesh::Draw() {
 	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

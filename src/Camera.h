@@ -11,6 +11,7 @@ public:
 	glm::mat4 GetViewMatrix();
 	glm::mat4 GetProjectionMatrix();
 	void ProcessInput();
+	void SetYFOV(float yFOVinDegrees);
 private:
 	float yFOVInDegrees;
 	float nearClip;

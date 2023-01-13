@@ -9,11 +9,13 @@ Camera::Camera(float yFOVInDegrees, float nearClip, float farClip) {
 	this->farClip = farClip;
 }
 void Camera::ProcessInput() {
+	// Process move
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) Translate(glm::vec3(0, 0, -1) * moveSpeed * deltaTime, Space::local);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) Translate(glm::vec3(0, 0, 1) * moveSpeed * deltaTime, Space::local);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) Translate(glm::vec3(-1, 0, 0) * moveSpeed * deltaTime, Space::local);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) Translate(glm::vec3(1, 0, 0) * moveSpeed * deltaTime, Space::local);
 
+	// Process look
 	double mouseX, mouseY;
 	glfwGetCursorPos(window, &mouseX, &mouseY);
 
@@ -31,6 +33,9 @@ void Camera::ProcessInput() {
 
 	lastX = mouseX;
 	lastY = mouseY;
+}
+void Camera::SetYFOV(float yFOVInDegrees) {
+	this->yFOVInDegrees = yFOVInDegrees;
 }
 glm::mat4 Camera::GetViewMatrix() {
 	return glm::inverse(GetModelMatrix());

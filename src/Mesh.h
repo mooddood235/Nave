@@ -8,7 +8,6 @@
 class Mesh : public GameObject{
 public:
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
-	~Mesh();
 	void Draw();
 private:
 	std::vector<Vertex> vertices;
