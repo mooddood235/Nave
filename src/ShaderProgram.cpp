@@ -19,6 +19,14 @@ void ShaderProgram::SetMat4(std::string uniformName, glm::mat4 value) {
 	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
 	glProgramUniformMatrix4fv(shaderProgram, location, 1, GL_FALSE, glm::value_ptr(value));
 }
+void ShaderProgram::SetVec3(std::string uniformName, glm::vec3 value) {
+	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
+	glProgramUniform3fv(shaderProgram, location, 1, glm::value_ptr(value));
+}
+void ShaderProgram::SetFloat(std::string uniformName, float value) {
+	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
+	glProgramUniform1f(shaderProgram, location, value);
+}
 unsigned int ShaderProgram::CompileShader(std::string path, GLenum type) {
 	if (!(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER)) {
 		std::cout << "ERROR: Cannot compile shader of type <" << std::to_string(type) << ">" << std::endl;

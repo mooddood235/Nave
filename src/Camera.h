@@ -1,7 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <GLFW/glfw3.h>
 
 #include "GameObject.h"
 
@@ -10,10 +9,14 @@ public:
 	Camera(float yFOVInDegrees, float nearClip, float farClip);
 	glm::mat4 GetViewMatrix();
 	glm::mat4 GetProjectionMatrix();
+	glm::mat4 GetRotationMatrix();
 	void ProcessInput();
 	void SetYFOV(float yFOVinDegrees);
+	float GetFocalLength();
+
 private:
 	float yFOVInDegrees;
+	float focalLength;
 	float nearClip;
 	float farClip;
 

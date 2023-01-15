@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\MathSphere.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Model.cpp" />
@@ -156,18 +157,18 @@
     <ClCompile Include="src\Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\MathSphere.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\GameObject.h" />
     <ClInclude Include="src\ShaderProgram.h" />
-    <ClInclude Include="src\Shaders\Debug_LocalPosition.frag" />
     <ClInclude Include="src\Vertex.h" />
     <ClInclude Include="src\WindowInfo.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\Shaders\LocalPosition.vert" />
-    <None Include="src\Shaders\Model.vert" />
+    <None Include="src\Shaders\RenderQuad.frag" />
+    <None Include="src\Shaders\RenderQuad.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

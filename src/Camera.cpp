@@ -7,6 +7,8 @@ Camera::Camera(float yFOVInDegrees, float nearClip, float farClip) {
 	this->yFOVInDegrees = yFOVInDegrees;
 	this->nearClip = nearClip;
 	this->farClip = farClip;
+
+	focalLength = (float)WINDOWHEIGHT / (2.0f * glm::tan(yFOVInDegrees / 2));
 }
 void Camera::ProcessInput() {
 	// Process move
@@ -37,9 +39,15 @@ void Camera::ProcessInput() {
 void Camera::SetYFOV(float yFOVInDegrees) {
 	this->yFOVInDegrees = yFOVInDegrees;
 }
+float Camera::GetFocalLength() {
+	return focalLength;
+}
 glm::mat4 Camera::GetViewMatrix() {
 	return glm::inverse(GetModelMatrix());
 }
 glm::mat4 Camera::GetProjectionMatrix() {
 	return glm::perspective(glm::radians(yFOVInDegrees), (float)WINDOWWIDTH / (float)WINDOWHEIGHT, nearClip, farClip);
+}
+glm::mat4 Camera::GetRotationMatrix() {
+	return rotationMatrix;
 }

@@ -42,12 +42,12 @@
     <ClCompile Include="src\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\MathSphere.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ShaderProgram.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Shaders\Debug_LocalPosition.frag">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GameObject.h">
@@ -68,9 +68,12 @@
     <ClInclude Include="src\WindowInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\MathSphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\Shaders\LocalPosition.vert" />
-    <None Include="src\Shaders\Model.vert" />
+    <None Include="src\Shaders\RenderQuad.vert" />
+    <None Include="src\Shaders\RenderQuad.frag" />
   </ItemGroup>
 </Project>

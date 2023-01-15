@@ -9,6 +9,7 @@
 #include "Model.h"
 #include "Vertex.h"
 #include "Camera.h"
+#include "MathSphere.h"
 
 void InitGLFW();
 void InitGlAD();
@@ -24,18 +25,29 @@ float deltaTime = 0;
 
 int main()
 {
+    // Setup
     InitGLFW();
     InitGlAD();
 
     glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_DEPTH_TEST);
 
-    ShaderProgram shader = ShaderProgram("src/Shaders/Model.vert", "src/Shaders/Debug_LocalPosition.frag");
+    // Load shaders
+    ShaderProgram renderQuadShader = ShaderProgram("src/Shaders/RenderQuad.vert", "src/Shaders/RenderQuad.frag");
 
-    Camera camera = Camera(45.0f, 0.1f, 100.0f);
-    camera.Translate(glm::vec3(0, 0, 8));
+    // Load quad used for rendering
+    Model renderQuad = Model("Models/Quad/Quad.fbx");
 
-    Model cube = Model("Models/Cube/Cube.fbx");
+    // Load scene objects
+    Camera camera = Camera(45, 0.1, 100);
+
+    MathSphere mathSphere = MathSphere(glm::vec3(0, 0, -2), 1);
+
+    renderQuadShader.SetFloat("camera.viewPortWidth", WINDOWWIDTH);
+    renderQuadShader.SetFloat("camera.viewPortHeight", WINDOWHEIGHT);
+
+    renderQuadShader.SetVec3("mathSpheres[0].position", mathSphere.GetPosition());
+    renderQuadShader.SetFloat("mathSpheres[0].radius", mathSphere.GetRadius());
 
     while (!glfwWindowShouldClose(window)) {
         // Setup
@@ -45,16 +57,19 @@ int main()
         glfwPollEvents();
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
-       
+        
         camera.ProcessInput();
 
-        // Draw Models
-        shader.SetMat4("modelMatrix", cube.GetModelMatrix());
-        shader.SetMat4("viewMatrix", camera.GetViewMatrix());
-        shader.SetMat4("projectionMatrix", camera.GetProjectionMatrix());
+        // Set uniforms
+        renderQuadShader.SetVec3("camera.position", camera.GetPosition());
+        renderQuadShader.SetVec3("camera.xAxis", camera.GetXAxis());
+        renderQuadShader.SetVec3("camera.yAxis", camera.GetYAxis());
+        renderQuadShader.SetVec3("camera.zAxis", camera.GetZAxis());
+        renderQuadShader.SetFloat("camera.focalLength", camera.GetFocalLength());
 
-        shader.Use();
-        cube.Draw();
+        // Ray trace
+        renderQuadShader.Use();
+        renderQuad.Draw();
         ShaderProgram::Unuse();
     }
     glfwTerminate();
