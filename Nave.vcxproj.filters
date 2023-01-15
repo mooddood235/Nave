@@ -45,6 +45,9 @@
     <ClCompile Include="src\MathSphere.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\EnvironmentMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ShaderProgram.h">
@@ -71,9 +74,14 @@
     <ClInclude Include="src\MathSphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\EnvironmentMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Shaders\RenderQuad.vert" />
     <None Include="src\Shaders\RenderQuad.frag" />
+    <None Include="src\Shaders\GenerateCubeMap.vert" />
+    <None Include="src\Shaders\GenerateCubeMap.frag" />
   </ItemGroup>
 </Project>

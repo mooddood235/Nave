@@ -10,6 +10,7 @@
 #include "Vertex.h"
 #include "Camera.h"
 #include "MathSphere.h"
+#include "EnvironmentMap.h"
 
 void InitGLFW();
 void InitGlAD();
@@ -38,10 +39,19 @@ int main()
     // Load quad used for rendering
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
+    // Load environment maps
+    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Park.hdr");
+    
     // Load scene objects
     Camera camera = Camera(45, 0.1, 100);
+    camera.Translate(glm::vec3(0, 0, 5));
 
-    MathSphere mathSphere = MathSphere(glm::vec3(0, 0, -2), 1);
+    MathSphere mathSphere = MathSphere();
+
+    // Set pre-runtime uniforms
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, environmentMap.GetEnvironmentMap());
+    renderQuadShader.SetInt("environmentMap", 0);
 
     renderQuadShader.SetFloat("camera.viewPortWidth", WINDOWWIDTH);
     renderQuadShader.SetFloat("camera.viewPortHeight", WINDOWHEIGHT);
@@ -60,7 +70,7 @@ int main()
         
         camera.ProcessInput();
 
-        // Set uniforms
+        // Set run-time uniforms
         renderQuadShader.SetVec3("camera.position", camera.GetPosition());
         renderQuadShader.SetVec3("camera.xAxis", camera.GetXAxis());
         renderQuadShader.SetVec3("camera.yAxis", camera.GetYAxis());

@@ -1,4 +1,5 @@
 #version 460 core
+
 struct Camera{
 	vec3 position;
 	vec3 xAxis;
@@ -25,14 +26,20 @@ struct MathSphere{
 	float radius;
 };
 
+// Constants
 const HitInfo NoHit = HitInfo(false, 0, vec3(0), vec3(0));
 
+// Helper functions
 vec3 At(Ray ray, float t);
+vec3 SampleEnvironmentMap(vec3 direction);
 
+// Intersection functions
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
 
 in vec2 uv;
 out vec4 FragColor;
+
+uniform sampler2D environmentMap;
 
 uniform Camera camera;
 
@@ -48,13 +55,28 @@ void main(){
 
 	HitInfo hitInfo = Hit_MathSphere(mathSpheres[0], ray);
 
-	if (hitInfo.didHit) FragColor = vec4(hitInfo.normal, 1);
-	else FragColor = vec4(0, 0.5, 0.3, 1);
+	if (hitInfo.didHit){
+		vec3 reflected = reflect(ray.direction, hitInfo.normal);
+		vec3 skyBoxColor = SampleEnvironmentMap(reflected);
+		FragColor = vec4(skyBoxColor, 1);
+	}
+	else FragColor = vec4(SampleEnvironmentMap(ray.direction), 1);
+
+	FragColor = vec4(FragColor.rgb / (FragColor.rgb + vec3(1.0)), 1);
 }
 vec3 At(Ray ray, float t){
 	return ray.origin + ray.direction * t;
 };
+vec3 SampleEnvironmentMap(vec3 direction)
+{
+	const vec2 invAtan = vec2(0.1591, 0.3183);
 
+    vec2 uv = vec2(atan(direction.z, direction.x), asin(direction.y));
+    uv *= invAtan;
+    uv += 0.5;
+    
+	return texture(environmentMap, uv).rgb;
+};
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
 	vec3 oc = ray.origin - mathSphere.position;
     float a = dot(ray.direction, ray.direction);
