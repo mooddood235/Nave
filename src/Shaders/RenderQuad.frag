@@ -17,7 +17,7 @@ struct HitInfo{
 	bool didHit;
 	float t;
 
-	vec3 pos;
+	vec3 position;
 	vec3 normal;
 };
 
@@ -27,11 +27,15 @@ struct MathSphere{
 };
 
 // Constants
-const HitInfo NoHit = HitInfo(false, 0, vec3(0), vec3(0));
+const float PI = 3.14159265359;
+const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0));
 
 // Helper functions
+float Rand(vec2 uv);
 vec3 At(Ray ray, float t);
 vec3 SampleEnvironmentMap(vec3 direction);
+vec3 SampleHemisphere(vec3 normal);
+mat3 GetTangentSpace(vec3 normal);
 
 // Intersection functions
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
@@ -39,30 +43,56 @@ HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
 in vec2 uv;
 out vec4 FragColor;
 
+uniform float seed;
+float _seed;
+
 uniform sampler2D environmentMap;
-
 uniform Camera camera;
+uniform MathSphere mathSpheres[10];
+uniform unsigned int maxDepth;
+uniform unsigned int maxSamples;
 
-uniform MathSphere mathSpheres[1];
 
 void main(){
+	_seed = seed;
+
 	vec3 worldUV = camera.position + 
 	-camera.zAxis * camera.focalLength + 
 	camera.xAxis * camera.viewPortWidth / 2.0 * uv.x +
 	camera.yAxis * camera.viewPortHeight / 2.0 * uv.y;
 
-	Ray ray = Ray(camera.position, normalize(worldUV - camera.position));
+	vec3 irradiance = vec3(0.0);
 
-	HitInfo hitInfo = Hit_MathSphere(mathSpheres[0], ray);
+	for (unsigned int _sample = 1; _sample <= maxSamples; _sample++){
+		vec3 radiance = vec3(1.0);
 
-	if (hitInfo.didHit){
-		vec3 reflected = reflect(ray.direction, hitInfo.normal);
-		vec3 skyBoxColor = SampleEnvironmentMap(reflected);
-		FragColor = vec4(skyBoxColor, 1);
+		Ray ray = Ray(camera.position, normalize(worldUV - camera.position));
+
+		for (unsigned int depth = 1; depth <= maxDepth + 1; depth++){
+			if (depth == maxDepth + 1){
+				radiance = vec3(0.0);
+				break;
+			}
+			HitInfo closestHit = NoHit;
+
+			for (unsigned int i = 0; i < mathSpheres.length; i++){
+				HitInfo hitInfo = Hit_MathSphere(mathSpheres[i], ray);
+				if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
+			}
+			if (closestHit.didHit){
+				vec3 reflectedDir = SampleHemisphere(closestHit.normal);
+				radiance *= 2 * vec3(0.2,0.5,0.3) * max(0, dot(reflectedDir, closestHit.normal));
+				ray = Ray(closestHit.position + reflectedDir * 0.001, reflectedDir);
+			}
+			else{
+				radiance *= SampleEnvironmentMap(ray.direction);
+				break;
+			}
+		}
+		irradiance += radiance;
 	}
-	else FragColor = vec4(SampleEnvironmentMap(ray.direction), 1);
-
-	FragColor = vec4(FragColor.rgb / (FragColor.rgb + vec3(1.0)), 1);
+	irradiance /= maxSamples;
+	FragColor = vec4(irradiance / (irradiance + vec3(1.0)), 1);
 }
 vec3 At(Ray ray, float t){
 	return ray.origin + ray.direction * t;
@@ -94,3 +124,28 @@ HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
 		return HitInfo(true, t, hitPos, (hitPos - mathSphere.position) / mathSphere.radius);
 	}
 };
+
+float Rand(){
+	float result = fract(sin(_seed / 100.0 * dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
+    _seed += uv.x + uv.y * camera.viewPortWidth;
+    return result;
+};
+
+vec3 SampleHemisphere(vec3 normal){
+	// Uniformly sample hemisphere direction
+    float cosTheta = Rand();
+    float sinTheta = sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
+    float phi = 2 * PI * Rand();
+    vec3 sampleVector = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+    // Transform direction to world space
+    return GetTangentSpace(normal) * sampleVector;
+};
+mat3 GetTangentSpace(vec3 normal){
+    // Choose a helper vector for the cross product
+    vec3 helper = vec3(1, 0, 0);
+    if (abs(normal.x) > 0.99) helper = vec3(0, 0, 1);
+    // Generate vectors
+    vec3 tangent = normalize(cross(normal, helper));
+    vec3 binormal = normalize(cross(normal, tangent));
+    return mat3(tangent, binormal, normal);
+}

@@ -59,6 +59,16 @@ int main()
     renderQuadShader.SetVec3("mathSpheres[0].position", mathSphere.GetPosition());
     renderQuadShader.SetFloat("mathSpheres[0].radius", mathSphere.GetRadius());
 
+    renderQuadShader.SetVec3("mathSpheres[1].position", mathSphere.GetPosition() - glm::vec3(0, 51, 0));
+    renderQuadShader.SetFloat("mathSpheres[1].radius", mathSphere.GetRadius() * 50);
+
+    renderQuadShader.SetVec3("mathSpheres[2].position", mathSphere.GetPosition() - glm::vec3(2, 0, 0));
+    renderQuadShader.SetFloat("mathSpheres[2].radius", mathSphere.GetRadius());
+
+    renderQuadShader.SetFloat("seed", 2357.0f);
+    renderQuadShader.SetUnsignedInt("maxDepth", 10);
+    renderQuadShader.SetUnsignedInt("maxSamples", 20);
+
     while (!glfwWindowShouldClose(window)) {
         // Setup
         UpdateDeltaTime();

@@ -31,6 +31,10 @@ void ShaderProgram::SetInt(std::string uniformName, int value) {
 	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
 	glProgramUniform1i(shaderProgram, location, value);
 }
+void ShaderProgram::SetUnsignedInt(std::string uniformName, unsigned int value) {
+	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
+	glProgramUniform1ui(shaderProgram, location, value);
+}
 unsigned int ShaderProgram::CompileShader(std::string path, GLenum type) {
 	if (!(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER)) {
 		std::cout << "ERROR: Cannot compile shader of type <" << std::to_string(type) << ">" << std::endl;
