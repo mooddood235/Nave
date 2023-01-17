@@ -169,9 +169,8 @@
     <ClInclude Include="src\WindowInfo.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\Shaders\GenerateCubeMap.frag" />
-    <None Include="src\Shaders\GenerateCubeMap.vert" />
-    <None Include="src\Shaders\RenderQuad.frag" />
+    <None Include="src\Shaders\PostProcess.frag" />
+    <None Include="src\Shaders\RayTrace.frag" />
     <None Include="src\Shaders\RenderQuad.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

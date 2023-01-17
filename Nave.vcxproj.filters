@@ -80,8 +80,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Shaders\RenderQuad.vert" />
-    <None Include="src\Shaders\RenderQuad.frag" />
-    <None Include="src\Shaders\GenerateCubeMap.vert" />
-    <None Include="src\Shaders\GenerateCubeMap.frag" />
+    <None Include="src\Shaders\RayTrace.frag" />
+    <None Include="src\Shaders\PostProcess.frag" />
   </ItemGroup>
 </Project>
