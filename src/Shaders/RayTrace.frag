@@ -6,8 +6,8 @@ struct Camera{
 	vec3 yAxis;
 	vec3 zAxis;
 	float focalLength;
-	unsigned int viewPortWidth;
-	unsigned int viewPortHeight;
+	uint viewPortWidth;
+	uint viewPortHeight;
 };
 struct Ray{
 	vec3 origin;
@@ -34,7 +34,7 @@ const float PI = 3.14159265359;
 const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0), vec3(0));
 
 // Helper functions
-float Rand(vec2 uv);
+float Rand();
 vec3 At(Ray ray, float t);
 vec3 SampleEnvironmentMap(vec3 direction);
 vec3 SampleHemisphere(vec3 normal);
@@ -50,16 +50,16 @@ layout (location = 1) out vec3 FinalColor;
 
 uniform sampler2D cumulativeRenderTexture;
 
-uniform unsigned int currSample;
+uniform uint currSample;
 
-uniform float seed;
-float _seed;
+uniform uint seed;
+uint _seed;
 
 uniform sampler2D environmentMap;
 
 uniform Camera camera;
 uniform MathSphere mathSpheres[10];
-uniform unsigned int maxDepth;
+uniform uint maxDepth;
 
 void main(){
 	_seed = seed;
@@ -73,14 +73,14 @@ void main(){
 
 	Ray ray = Ray(camera.position, normalize(worldUV - camera.position));
 
-	for (unsigned int depth = 1; depth <= maxDepth + 1; depth++){
+	for (uint depth = 1; depth <= maxDepth + 1; depth++){
 		if (depth == maxDepth + 1){
 			radiance = vec3(0.0);
 			break;
 		}
 		HitInfo closestHit = NoHit;
 
-		for (unsigned int i = 0; i < mathSpheres.length; i++){
+		for (uint i = 0; i < mathSpheres.length; i++){
 			HitInfo hitInfo = Hit_MathSphere(mathSpheres[i], ray);
 			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
 		}
@@ -129,12 +129,22 @@ HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
 };
 
 float Rand(){
-	vec2 pixel = vec2((uv.x + 1.0) / 2 * camera.viewPortWidth, (uv.y + 1.0) / 2 * camera.viewPortHeight);
+	const float MAXHASH = 4294967295.0;
 
-	float result = fract(sin(_seed / 100.0 * dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
-    _seed += 1.0;
-    return result;
+	vec2 pixel = vec2((uv.x + 1.0) / 2.0 * camera.viewPortWidth, (uv.y + 1.0) / 2.0 * camera.viewPortHeight);
+
+    uint value = uint(pixel.y * camera.viewPortWidth + pixel.x);
+    value *= _seed;
+    value ^= 2747636419u;
+    value *= 2654435769u;
+    value ^= value >> 16;
+    value *= 2654435769u;
+    value ^= value >> 16;
+    value *= 2654435769u;
+    _seed++;
+    return float(value) / MAXHASH;
 }
+
 vec3 SampleHemisphere(vec3 normal){
 	// Uniformly sample hemisphere direction
     float cosTheta = Rand();

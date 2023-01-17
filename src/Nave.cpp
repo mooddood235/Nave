@@ -128,7 +128,7 @@ int main()
 
         // Set run-time uniforms
         rayTraceShader.SetUnsignedInt("currSample", currSample);
-        rayTraceShader.SetFloat("seed", rand() % 10000);
+        rayTraceShader.SetUnsignedInt("seed", rand() % 10000);
 
         rayTraceShader.SetVec3("camera.position", camera.GetPosition());
         rayTraceShader.SetVec3("camera.xAxis", camera.GetXAxis());
