@@ -81,23 +81,31 @@ int main()
     rayTraceShader.SetVec3("mathSpheres[0].position", mathSphere.GetPosition());
     rayTraceShader.SetFloat("mathSpheres[0].radius", mathSphere.GetRadius());
     rayTraceShader.SetVec3("mathSpheres[0].color", glm::vec3(0, 1, 0));
+    rayTraceShader.SetFloat("mathSpheres[0].roughness", 1.0f);
+    rayTraceShader.SetFloat("mathSpheres[0].metalness", 0.0f);
 
     rayTraceShader.SetVec3("mathSpheres[1].position", mathSphere.GetPosition() - glm::vec3(0, 51, 0));
     rayTraceShader.SetFloat("mathSpheres[1].radius", mathSphere.GetRadius() * 50);
     rayTraceShader.SetVec3("mathSpheres[1].color", glm::vec3(1.0f));
+    rayTraceShader.SetFloat("mathSpheres[1].roughness", 0.0f);
+    rayTraceShader.SetFloat("mathSpheres[1].metalness", 0.0f);
 
     rayTraceShader.SetVec3("mathSpheres[2].position", mathSphere.GetPosition() - glm::vec3(2, 0, 0));
     rayTraceShader.SetFloat("mathSpheres[2].radius", mathSphere.GetRadius());
     rayTraceShader.SetVec3("mathSpheres[2].color", glm::vec3(1, 0, 0));
+    rayTraceShader.SetFloat("mathSpheres[2].roughness", 0.8f);
+    rayTraceShader.SetFloat("mathSpheres[2].metalness", 1.0);
 
     rayTraceShader.SetVec3("mathSpheres[3].position", mathSphere.GetPosition() - glm::vec3(1, 0, 2));
     rayTraceShader.SetFloat("mathSpheres[3].radius", mathSphere.GetRadius());
-    rayTraceShader.SetVec3("mathSpheres[3].color", glm::vec3(1, 1, 1));
+    rayTraceShader.SetVec3("mathSpheres[3].color", glm::vec3(0, 0, 1));
+    rayTraceShader.SetFloat("mathSpheres[3].roughness", 0.0f);
+    rayTraceShader.SetFloat("mathSpheres[3].metalness", 0.0);
 
     rayTraceShader.SetUnsignedInt("maxDepth", 15);
 
     //---------------------------------------------------
-    const unsigned int maxSamples = 10;
+    const unsigned int maxSamples = 8000;
     unsigned int currSample = 1;
 
     glm::mat4 lastCameraModelMatrix = camera.GetModelMatrix();
@@ -124,9 +132,13 @@ int main()
             lastCameraProjectionMatrix = camera.GetProjectionMatrix();
         }
 
+        if (currSample > maxSamples) continue;
+        std::cout << currSample << "/" << maxSamples << std::endl;
+
+        // Ray trace
+
         glBindFramebuffer(GL_FRAMEBUFFER, rayTraceFBO);
 
-        // Set run-time uniforms
         rayTraceShader.SetUnsignedInt("currSample", currSample);
         rayTraceShader.SetUnsignedInt("seed", rand());
 
@@ -144,7 +156,6 @@ int main()
         glBindTexture(GL_TEXTURE_2D, environmentMap.GetEnvironmentMap());
         rayTraceShader.SetInt("environmentMap", 1);
 
-        // Ray trace
         rayTraceShader.Use();
         renderQuad.Draw();
         ShaderProgram::Unuse();
