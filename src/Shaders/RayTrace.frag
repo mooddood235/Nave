@@ -46,10 +46,10 @@ vec3 SampleHemisphere(vec3 normal);
 mat3 GetTangentSpace(vec3 normal);
 
 vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
+vec3 FresnelSchlick(float cosTheta, vec3 F0);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
-
 
 // Intersection functions
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
@@ -96,10 +96,35 @@ void main(){
 			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
 		}
 		if (closestHit.didHit){
-			ray.origin = closestHit.position + closestHit.normal * 0.001;
-			ray.direction = SampleHemisphere(closestHit.normal);
+			vec3 N = closestHit.normal;
+			vec3 V = normalize(camera.position - closestHit.position);
+			vec3 L = SampleHemisphere(closestHit.normal);
+			vec3 H = normalize(L + V);
 
-			radiance *= 2.0 * closestHit.albedo * max(0.0, dot(closestHit.normal, ray.direction));
+			if (closestHit.roughness < 0.1) closestHit.roughness = 0.1;
+
+			vec3 lambert = closestHit.albedo / PI;
+
+			float D = DistributionGGX(N, H, closestHit.roughness);
+			
+			vec3 F0 = vec3(0.04);
+			F0 = mix(F0, closestHit.albedo, closestHit.metalness);
+			vec3 F = FresnelSchlickRoughness(max(0.0, dot(H, V)), F0, closestHit.roughness);
+			
+			float G = GeometrySmith(N, V, L, closestHit.roughness);
+
+			vec3 cookTorrence = D*F*G/(4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0)  + 0.0001);
+
+			vec3 kS = F;
+			vec3 kD = vec3(1.0) - kS;
+			kD *= 1.0 - closestHit.metalness;
+
+			vec3 BRDF = kD * lambert + 4 * cookTorrence;
+
+			radiance *= 2.0 * PI * BRDF * max(0.0, dot(closestHit.normal, L));
+			
+			ray.origin = closestHit.position + closestHit.normal * 0.001;
+			ray.direction = L;
 		}
 		else{
 			radiance *= SampleEnvironmentMap(ray.direction);
@@ -178,6 +203,10 @@ mat3 GetTangentSpace(vec3 normal){
 vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+vec3 FresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
