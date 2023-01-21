@@ -119,7 +119,7 @@ void main(){
 			vec3 kD = vec3(1.0) - kS;
 			kD *= 1.0 - closestHit.metalness;
 
-			vec3 BRDF = kD * lambert + 4 * cookTorrence;
+			vec3 BRDF = kD * lambert + kS * cookTorrence;
 
 			radiance *= 2.0 * PI * BRDF * max(0.0, dot(closestHit.normal, L));
 			
