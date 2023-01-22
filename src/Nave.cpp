@@ -81,7 +81,7 @@ int main()
     rayTraceShader.SetVec3("mathSpheres[1].position", mathSphere.GetPosition() - glm::vec3(0, 51, 0));
     rayTraceShader.SetFloat("mathSpheres[1].radius", mathSphere.GetRadius() * 50);
     rayTraceShader.SetVec3("mathSpheres[1].color", glm::vec3(1.0f));
-    rayTraceShader.SetFloat("mathSpheres[1].roughness", 0.0f);
+    rayTraceShader.SetFloat("mathSpheres[1].roughness", 1.0f);
     rayTraceShader.SetFloat("mathSpheres[1].metalness", 0.0f);
 
     rayTraceShader.SetVec3("mathSpheres[0].position", mathSphere.GetPosition());
@@ -92,14 +92,14 @@ int main()
 
     rayTraceShader.SetVec3("mathSpheres[2].position", mathSphere.GetPosition() - glm::vec3(2, 0, 0));
     rayTraceShader.SetFloat("mathSpheres[2].radius", mathSphere.GetRadius());
-    rayTraceShader.SetVec3("mathSpheres[2].color", glm::vec3(0, 1, 0));
+    rayTraceShader.SetVec3("mathSpheres[2].color", glm::vec3(1, 1, 1));
     rayTraceShader.SetFloat("mathSpheres[2].roughness", 0.0f);
     rayTraceShader.SetFloat("mathSpheres[2].metalness", 1.0f);
 
     rayTraceShader.SetVec3("mathSpheres[3].position", mathSphere.GetPosition() - glm::vec3(1, 0, 2));
     rayTraceShader.SetFloat("mathSpheres[3].radius", mathSphere.GetRadius());
     rayTraceShader.SetVec3("mathSpheres[3].color", glm::vec3(0, 0, 1));
-    rayTraceShader.SetFloat("mathSpheres[3].roughness", 0.5f);
+    rayTraceShader.SetFloat("mathSpheres[3].roughness", 1.0f);
     rayTraceShader.SetFloat("mathSpheres[3].metalness", 0.0f);
 
     rayTraceShader.SetUnsignedInt("maxDepth", 15);

@@ -43,6 +43,7 @@ float Rand();
 vec3 At(Ray ray, float t);
 vec3 SampleEnvironmentMap(vec3 direction);
 vec3 SampleHemisphere(vec3 normal);
+vec3 GGXImportanceSampleHemisphere(vec3 N, vec3 wo, float t, float roughness);
 mat3 GetTangentSpace(vec3 normal);
 
 vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
@@ -96,9 +97,11 @@ void main(){
 			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
 		}
 		if (closestHit.didHit){
+			const float t = 0.5;
+
 			vec3 N = closestHit.normal;
 			vec3 V = normalize(camera.position - closestHit.position);
-			vec3 L = SampleHemisphere(closestHit.normal);
+			vec3 L = GGXImportanceSampleHemisphere(closestHit.normal, ray.direction, t, closestHit.roughness);
 			vec3 H = normalize(L + V);
 
 			if (closestHit.roughness < 0.1) closestHit.roughness = 0.1;
@@ -120,8 +123,9 @@ void main(){
 			kD *= 1.0 - closestHit.metalness;
 
 			vec3 BRDF = kD * lambert + kS * cookTorrence;
+			float pdf = (1 - t) * (max(0.0, dot(closestHit.normal, L))/PI) + t * (DistributionGGX(N, H, closestHit.roughness)/4*max(0.0, dot(L, H)));
 
-			radiance *= 2.0 * PI * BRDF * max(0.0, dot(closestHit.normal, L));
+			radiance *= BRDF / pdf * max(0.0, dot(closestHit.normal, L));
 			
 			ray.origin = closestHit.position + closestHit.normal * 0.001;
 			ray.direction = L;
@@ -191,6 +195,28 @@ vec3 SampleHemisphere(vec3 normal){
     // Transform direction to world space
     return GetTangentSpace(normal) * sampleVector;
 };
+vec3 GGXImportanceSampleHemisphere(vec3 N, vec3 wo, float t, float roughness){
+
+	float e0 = Rand();
+	float e1 = Rand();
+	float e2 = Rand();
+
+	float theta;
+
+	if (e0 > t) theta = acos(sqrt(e1));
+	else theta = atan((roughness * sqrt(e1))/sqrt(1 - e1));
+
+	float phi = 2.0 * PI * e2;
+
+	vec3 sampleVector = GetTangentSpace(N) * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi),cos(theta));
+    
+	if (e0 < t) sampleVector = reflect(wo, sampleVector);
+
+	if (dot(sampleVector, N) < 0) reflect(sampleVector *= -1.0, N);
+	
+	return sampleVector;
+};
+
 mat3 GetTangentSpace(vec3 normal){
     // Choose a helper vector for the cross product
     vec3 helper = vec3(1, 0, 0);
