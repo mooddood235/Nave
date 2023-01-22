@@ -99,6 +99,9 @@ void main(){
 		if (closestHit.didHit){
 			const float t = 0.5;
 
+			closestHit.roughness = clamp(closestHit.roughness, 0.0, 1.0);
+			closestHit.metalness = clamp(closestHit.metalness, 0.0, 1.0);
+
 			vec3 N = closestHit.normal;
 			vec3 V = normalize(camera.position - closestHit.position);
 			vec3 L = GGXImportanceSampleHemisphere(closestHit.normal, ray.direction, t, closestHit.roughness);
