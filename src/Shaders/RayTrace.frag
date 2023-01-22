@@ -46,6 +46,7 @@ vec3 SampleHemisphere(vec3 normal);
 vec3 GGXImportanceSampleHemisphere(vec3 N, vec3 wo, float t, float roughness);
 mat3 GetTangentSpace(vec3 normal);
 
+vec3 GGXComputeRadiance(Ray ray, HitInfo hitInfo, out vec3 newDir);
 vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
@@ -97,41 +98,12 @@ void main(){
 			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
 		}
 		if (closestHit.didHit){
-			const float t = 0.5;
+			vec3 newDir;
 
-			closestHit.roughness = clamp(closestHit.roughness, 0.0, 1.0);
-			closestHit.metalness = clamp(closestHit.metalness, 0.0, 1.0);
-
-			vec3 N = closestHit.normal;
-			vec3 V = normalize(camera.position - closestHit.position);
-			vec3 L = GGXImportanceSampleHemisphere(closestHit.normal, ray.direction, t, closestHit.roughness);
-			vec3 H = normalize(L + V);
-
-			if (closestHit.roughness < 0.1) closestHit.roughness = 0.1;
-
-			vec3 lambert = closestHit.albedo / PI;
-
-			float D = DistributionGGX(N, H, closestHit.roughness);
-			
-			vec3 F0 = vec3(0.04);
-			F0 = mix(F0, closestHit.albedo, closestHit.metalness);
-			vec3 F = FresnelSchlickRoughness(max(0.0, dot(H, V)), F0, closestHit.roughness);
-			
-			float G = GeometrySmith(N, V, L, closestHit.roughness);
-
-			vec3 cookTorrence = D*F*G/(4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0)  + 0.0001);
-
-			vec3 kS = F;
-			vec3 kD = vec3(1.0) - kS;
-			kD *= 1.0 - closestHit.metalness;
-
-			vec3 BRDF = kD * lambert + kS * cookTorrence;
-			float pdf = (1 - t) * (max(0.0, dot(closestHit.normal, L))/PI) + t * (DistributionGGX(N, H, closestHit.roughness)/4*max(0.0, dot(L, H)));
-
-			radiance *= BRDF / pdf * max(0.0, dot(closestHit.normal, L));
+			radiance *= GGXComputeRadiance(ray, closestHit, newDir);
 			
 			ray.origin = closestHit.position + closestHit.normal * 0.001;
-			ray.direction = L;
+			ray.direction = newDir;
 		}
 		else{
 			radiance *= SampleEnvironmentMap(ray.direction);
@@ -270,3 +242,39 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 	
     return ggx1 * ggx2;
 }
+vec3 GGXComputeRadiance(Ray ray, HitInfo hitInfo, out vec3 newDir){
+	const float t = 0.5;
+
+	hitInfo.roughness = clamp(hitInfo.roughness, 0.0, 1.0);
+	hitInfo.metalness = clamp(hitInfo.metalness, 0.0, 1.0);
+
+	vec3 N = hitInfo.normal;
+	vec3 V = normalize(camera.position - hitInfo.position);
+	vec3 L = GGXImportanceSampleHemisphere(hitInfo.normal, ray.direction, t, hitInfo.roughness);
+	vec3 H = normalize(L + V);
+
+	if (hitInfo.roughness < 0.1) hitInfo.roughness = 0.1;
+
+	vec3 lambert = hitInfo.albedo / PI;
+
+	float D = DistributionGGX(N, H, hitInfo.roughness);
+			
+	vec3 F0 = vec3(0.04);
+	F0 = mix(F0, hitInfo.albedo, hitInfo.metalness);
+	vec3 F = FresnelSchlickRoughness(max(0.0, dot(H, V)), F0, hitInfo.roughness);
+			
+	float G = GeometrySmith(N, V, L, hitInfo.roughness);
+
+	vec3 cookTorrence = D*F*G/(4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0)  + 0.0001);
+
+	vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+	kD *= 1.0 - hitInfo.metalness;
+
+	vec3 BRDF = kD * lambert + kS * cookTorrence;
+	float pdf = (1 - t) * (max(0.0, dot(hitInfo.normal, L))/PI) + t * (DistributionGGX(N, H, hitInfo.roughness)/4*max(0.0, dot(L, H)));
+
+	newDir = L;
+
+	return BRDF / pdf * max(0.0, dot(hitInfo.normal, L));
+};
