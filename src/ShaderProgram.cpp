@@ -27,6 +27,10 @@ void ShaderProgram::SetFloat(std::string uniformName, float value) {
 	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
 	glProgramUniform1f(shaderProgram, location, value);
 }
+void ShaderProgram::SetDouble(std::string uniformName, double value) {
+	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
+	glProgramUniform1d(shaderProgram, location, value);
+}
 void ShaderProgram::SetInt(std::string uniformName, int value) {
 	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
 	glProgramUniform1i(shaderProgram, location, value);

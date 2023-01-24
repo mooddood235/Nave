@@ -15,6 +15,7 @@ public:
 	void SetMat4(std::string uniformName, glm::mat4 value);
 	void SetVec3(std::string uniformName, glm::vec3 value);
 	void SetFloat(std::string uniformName, float value);
+	void SetDouble(std::string uniformName, double value);
 	void SetInt(std::string uniformName, int value);
 	void SetUnsignedInt(std::string uniformName, unsigned int value);
 private:
