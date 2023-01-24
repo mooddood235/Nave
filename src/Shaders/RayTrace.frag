@@ -279,7 +279,7 @@ vec3 GGXComputeRadiance(vec3 wo, HitInfo hitInfo, out vec3 wi){
 	vec3 cookTorrence = D*F*G/(4.0 * sdot(N, V) * sdot(N, wi) + 0.0001);
 
 	vec3 kS = F;
-	vec3 kD = vec3(1.0) - kS;
+	vec3 kD = (vec3(1.0) - kS) * (1.0 - hitInfo.metalness);
 
 	vec3 BRDF = kD * lambert + kS * cookTorrence;
 	float pdf = (1 - t) * (sdot(hitInfo.normal, wi)/PI) + t * (DistributionGGX(N, H, alpha)/4*sdot(wi, H));
