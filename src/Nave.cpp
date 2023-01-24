@@ -102,7 +102,7 @@ int main()
     rayTraceShader.SetFloat("mathSpheres[3].roughness", 0.0f);
     rayTraceShader.SetFloat("mathSpheres[3].metalness", 0.0f);
 
-    rayTraceShader.SetUnsignedInt("maxDepth", 15);
+    rayTraceShader.SetUnsignedInt("maxDepth", 3);
 
     //---------------------------------------------------
     const unsigned int maxSamples = 8000;
