@@ -86,7 +86,7 @@ int main()
 
     rayTraceShader.SetVec3("mathSpheres[0].position", mathSphere.GetPosition());
     rayTraceShader.SetFloat("mathSpheres[0].radius", mathSphere.GetRadius());
-    rayTraceShader.SetVec3("mathSpheres[0].color", glm::vec3(1, 0, 0));
+    rayTraceShader.SetVec3("mathSpheres[0].color", glm::vec3(1.0f, 0, 0));
     rayTraceShader.SetFloat("mathSpheres[0].roughness", 0.0f);
     rayTraceShader.SetFloat("mathSpheres[0].metalness", 0.0f);
 

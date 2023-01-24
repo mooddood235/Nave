@@ -184,11 +184,9 @@ vec3 GGXImportanceSampleHemisphere(vec3 N, vec3 wo, float t, float roughness){
 
 	float phi = 2.0 * PI * e2;
 
-	vec3 sampleVector = GetTangentSpace(N) * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi),cos(theta));
+	vec3 sampleVector = normalize(GetTangentSpace(N) * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi),cos(theta)));
     
 	if (e0 < t) sampleVector = reflect(wo, sampleVector);
-
-	if (dot(sampleVector, N) < 0) sampleVector = reflect(sampleVector * -1.0, N);
 	
 	return sampleVector;
 };
@@ -251,9 +249,12 @@ vec3 GGXComputeRadiance(vec3 wo, HitInfo hitInfo, out vec3 wi){
 
 	vec3 N = hitInfo.normal;
 	vec3 V = normalize(camera.position - hitInfo.position);
-	wi = GGXImportanceSampleHemisphere(hitInfo.normal, wo, t, hitInfo.roughness);
-	vec3 H = normalize(wi + V);
 
+	wi = GGXImportanceSampleHemisphere(hitInfo.normal, wo, t, hitInfo.roughness);
+	
+	if (dot(wi, N) < 0) return vec3(0);
+
+	vec3 H = normalize(wi + V);
 
 	vec3 lambert = hitInfo.albedo / PI;
 
