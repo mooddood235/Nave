@@ -172,7 +172,7 @@ vec3 SampleHemisphere(vec3 normal){
     float phi = 2 * PI * Rand();
     vec3 sampleVector = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
     // Transform direction to world space
-    return GetTangentSpace(normal) * sampleVector;
+    return normalize(GetTangentSpace(normal) * sampleVector);
 };
 
 vec3 GGXImportanceSampleHemisphere(vec3 N, vec3 wo, float t, float roughness){
@@ -252,7 +252,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float alpha)
     return ggx1 * ggx2;
 }
 vec3 GGXComputeRadiance(vec3 wo, HitInfo hitInfo, out vec3 wi){
-	const float t = 0.25;
+	const float t = 0.5;
 
 	float alpha = clamp(hitInfo.roughness, 0.001, 0.9999);
 	hitInfo.metalness = clamp(hitInfo.metalness, 0.0, 1.0);
@@ -261,7 +261,7 @@ vec3 GGXComputeRadiance(vec3 wo, HitInfo hitInfo, out vec3 wi){
 	vec3 V = normalize(camera.position - hitInfo.position);
 
 	wi = GGXImportanceSampleHemisphere(hitInfo.normal, wo, t, alpha);
-	
+
 	if (dot(wi, N) < 0) return vec3(0);
 
 	vec3 H = normalize(wi + V);

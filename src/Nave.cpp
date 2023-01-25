@@ -81,8 +81,8 @@ int main()
     rayTraceShader.SetVec3("mathSpheres[1].position", mathSphere.GetPosition() - glm::vec3(0, 51, 0));
     rayTraceShader.SetFloat("mathSpheres[1].radius", mathSphere.GetRadius() * 50);
     rayTraceShader.SetVec3("mathSpheres[1].color", glm::vec3(1.0f));
-    rayTraceShader.SetFloat("mathSpheres[1].roughness", 1.0f);
-    rayTraceShader.SetFloat("mathSpheres[1].metalness", 0.0f);
+    rayTraceShader.SetFloat("mathSpheres[1].roughness", 0.0f);
+    rayTraceShader.SetFloat("mathSpheres[1].metalness", 1.0f);
 
     rayTraceShader.SetVec3("mathSpheres[0].position", mathSphere.GetPosition());
     rayTraceShader.SetFloat("mathSpheres[0].radius", mathSphere.GetRadius());
@@ -99,10 +99,10 @@ int main()
     rayTraceShader.SetVec3("mathSpheres[3].position", mathSphere.GetPosition() - glm::vec3(1, 0, 2));
     rayTraceShader.SetFloat("mathSpheres[3].radius", mathSphere.GetRadius());
     rayTraceShader.SetVec3("mathSpheres[3].color", glm::vec3(0, 0, 1));
-    rayTraceShader.SetFloat("mathSpheres[3].roughness", 0.0f);
+    rayTraceShader.SetFloat("mathSpheres[3].roughness", 0.05f);
     rayTraceShader.SetFloat("mathSpheres[3].metalness", 0.0f);
 
-    rayTraceShader.SetUnsignedInt("maxDepth", 3);
+    rayTraceShader.SetUnsignedInt("maxDepth", 25);
 
     //---------------------------------------------------
     const unsigned int maxSamples = 8000;
@@ -185,10 +185,10 @@ void InitGLFW() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
 
-    WINDOWWIDTH = videoMode->width;
-    WINDOWHEIGHT = videoMode->height;
+    WINDOWWIDTH = videoMode->width / 1.2f;
+    WINDOWHEIGHT = videoMode->height / 1.2f;
 
-    window = glfwCreateWindow(videoMode->width, videoMode->height, "Nave", monitor, NULL);
+    window = glfwCreateWindow(videoMode->width / 1.2f, videoMode->height / 1.2f, "Nave", NULL, NULL);
 
     if (!window) {
         std::cout << "ERROR: Failed to create GLFW window" << std::endl;
