@@ -36,6 +36,7 @@ struct MathSphere{
 
 // Constants
 const float PI = 3.14159265359;
+const float MINA = 0.2;
 const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0), vec3(0), 0, 0);
 
 // Helper functions
@@ -74,7 +75,6 @@ uniform sampler2D environmentMap;
 uniform Camera camera;
 uniform MathSphere mathSpheres[10];
 uniform uint maxDepth;
-
 
 void main(){
 	_seed = seed;
@@ -196,10 +196,9 @@ float D_GGX(vec3 n, vec3 m, float a){
 
 	float numerator = a2;
 	float denominator = ndotm2 * (a2 - 1.0) + 1.0;
-	denominator *= denominator;
-	denominator *= PI;
+	denominator = denominator * denominator * PI;
 
-	return numerator / Den(denominator);
+	return numerator / denominator;
 };
 float G_GGX(vec3 n, vec3 x, float a){
 	float a2 = a * a;
@@ -210,7 +209,7 @@ float G_GGX(vec3 n, vec3 x, float a){
 	float numerator = 2.0 * ndotx;
 	float denominator = ndotx + sqrt(a2 + (1.0 - a2) * ndotx2);
 
-	return numerator / Den(denominator);
+	return numerator / denominator;
 };
 float G_smith(vec3 n, vec3 l, vec3 v, float a){
 	return G_GGX(n, l, a) * G_GGX(n, v, a);
@@ -232,44 +231,42 @@ vec3 ImportanceSampleGGX(vec3 n, float a){
 	return normalize(GetTangentSpace(n) * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)));
 };
 
-vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
-	const float specChance = 0.5;
 
-	float a = clamp(hitInfo.roughness, 0.00001, 1.0);
+
+vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
+	const float specularChance = 0.5;
+
+	float a = clamp(hitInfo.roughness, 0.001, 1.0);
 
 	vec3 n = hitInfo.normal;
 	vec3 v = normalize(camera.position - hitInfo.position);
+	vec3 m;
 
-	if (Rand() <= specChance){
-		vec3 m = ImportanceSampleGGX(n, a);
+	float e0 = Rand();
+
+	if (e0 <= specularChance){
+		m = ImportanceSampleGGX(n, a);
 		wi = reflect(wo, m);
-		vec3 h = normalize(v + wi);
 
-		if (dot(n, wi) < 0.0) return vec3(0.0);
-
-		float D = D_GGX(n, h, a);
-		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
-		float G = G_smith(n, wi, v, a);
-	
-		vec3 specNumerator = D * F * G;
-		float specDenominator = 4.0 * sdot(n, wi) * sdot(n, v);
-
-		vec3 specular = specNumerator / Den(specDenominator);
-
-		float pdf = D_GGX(n, m, a) * specChance;
-
-		return specular / pdf * sdot(n, wi);
+		if (dot(wi, n) < 0) return vec3(0.0);
 	}
 	else{
 		wi = SampleHemisphere(n);
-		vec3 h = normalize(v + wi);
-
-		vec3 lambart = hitInfo.albedo / PI;
-
-		float pdf = 1.0 / (2.0 * PI) * (1.0 - specChance);
-
-		vec3 kD = (1.0 - F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness))) * (1.0 - hitInfo.metalness);
-
-		return kD * lambart / pdf * sdot(n, wi);
+		m = normalize(-wo + wi);
 	}
-}
+	vec3 h = normalize(v + wi);
+
+	vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
+	float D = min(D_GGX(n, h, a), 1.0);
+
+	vec3 lambart = hitInfo.albedo / PI;
+	vec3 specular = D * F;
+
+	vec3 kS = F;
+	vec3 kD = (1.0 - kS) * (1.0 - hitInfo.metalness);
+
+	vec3 BRDF = kD * lambart + specular;
+	float pdf = (1.0 - specularChance) * (1.0 / (2.0 * PI)) + specularChance * D;
+
+	return BRDF / pdf * sdot(n, wi);
+};
