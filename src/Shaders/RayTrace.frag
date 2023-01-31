@@ -46,13 +46,13 @@ vec3 SampleHemisphere(vec3 normal);
 mat3 GetTangentSpace(vec3 normal);
 float sdot(vec3 v0, vec3 v1);
 
-vec3 GGXComputeRadiance(vec3 wo, HitInfo hitInfo, out vec3 newDir);
-vec3 GGXImportanceSampleHemisphere(vec3 N, vec3 wo, float t, float roughness);
-vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
-vec3 FresnelSchlick(float cosTheta, vec3 F0);
-float DistributionGGX(vec3 N, vec3 H, float roughness);
-float GeometrySchlickGGX(float NdotV, float roughness);
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+// GGX distribution
+vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi);
+float D_GGX(vec3 n, vec3 m, float a);
+float G_GGX(vec3 n, vec3 x, float a);
+float G_smith(vec3 n, vec3 l, vec3 v, float a);
+vec3 F_schlick(vec3 v, vec3 h, vec3 F0);
+vec3 ImportanceSampleGGX(vec3 n, float a);
 
 // Intersection functions
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
@@ -74,6 +74,7 @@ uniform sampler2D environmentMap;
 uniform Camera camera;
 uniform MathSphere mathSpheres[10];
 uniform uint maxDepth;
+
 
 void main(){
 	_seed = seed;
@@ -101,7 +102,7 @@ void main(){
 		if (closestHit.didHit){
 			vec3 wi;
 
-			radiance *= GGXComputeRadiance(ray.direction, closestHit, wi);
+			radiance *= ComputeRadianceGGX(ray.direction, closestHit, wi);
 
 			ray.origin = closestHit.position + closestHit.normal * 0.001;
 			ray.direction = wi;
@@ -141,7 +142,7 @@ HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
 		if (t < 0) return NoHit;
 		
 		vec3 hitPos = At(ray, t);
-		return HitInfo(true, t, hitPos, (hitPos - mathSphere.position) / mathSphere.radius, mathSphere.color, mathSphere.roughness, mathSphere.metalness);
+		return HitInfo(true, t, hitPos, normalize(hitPos - mathSphere.position), mathSphere.color, mathSphere.roughness, mathSphere.metalness);
 	}
 };
 
@@ -175,26 +176,6 @@ vec3 SampleHemisphere(vec3 normal){
     return normalize(GetTangentSpace(normal) * sampleVector);
 };
 
-vec3 GGXImportanceSampleHemisphere(vec3 N, vec3 wo, float t, float roughness){
-
-	float e0 = Rand();
-	float e1 = Rand();
-	float e2 = Rand();
-
-	float theta;
-
-	if (e0 > t) theta = acos(sqrt(e1));
-	else theta = atan((roughness * sqrt(e1))/sqrt(1 - e1));
-
-	float phi = 2.0 * PI * e2;
-
-	vec3 sampleVector = normalize(GetTangentSpace(N) * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi),cos(theta)));
-    
-	if (e0 < t) sampleVector = reflect(wo, sampleVector);
-	
-	return sampleVector;
-};
-
 mat3 GetTangentSpace(vec3 normal){
     // Choose a helper vector for the cross product
     vec3 helper = vec3(1, 0, 0);
@@ -204,85 +185,91 @@ mat3 GetTangentSpace(vec3 normal){
     vec3 binormal = normalize(cross(normal, tangent));
     return mat3(tangent, binormal, normal);
 }
-vec3 FresnelSchlickRoughness(float HdotV, vec3 F0, float alpha)
-{
-    return F0 + (max(vec3(1.0 - alpha), F0) - F0) * pow(clamp(1.0 - HdotV, 0.0, 1.0), 5.0);
+float Den(float value){
+	return max(0.0001, value);
 }
-vec3 FresnelSchlick(float HdotV, vec3 F0)
-{
-    return F0 + (1.0 - F0) * pow(clamp(1.0 - HdotV, 0.0, 1.0), 5.0);
-}
-float DistributionGGX(vec3 N, vec3 H, float alpha)
-{
-//    float a      = alpha*alpha;
-//    float a2     = a*a;
-//    float NdotH  = sdot(N, H);
-//    float NdotH2 = NdotH*NdotH;
-//	
-//    float num   = a2;
-//    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-//    denom = PI * denom * denom;
-//	
-//    return num / denom;
+float D_GGX(vec3 n, vec3 m, float a){	
+	float a2 = a * a;
 
-	float NoH = sdot(N,H);
-    float alpha2 = alpha * alpha;
-    float NoH2 = NoH * NoH;
-    float den = NoH2 * alpha2 + (1 - NoH2);
-    return alpha2 / ( PI * den * den );
-}
+	float ndotm = sdot(n, m);
+	float ndotm2 = ndotm * ndotm;
 
-float GeometrySchlickGGX(float NdotV, float alpha)
-{
-    float r = (alpha + 1.0);
-    float k = (r*r) / 8.0;
+	float numerator = a2;
+	float denominator = ndotm2 * (a2 - 1.0) + 1.0;
+	denominator *= denominator;
+	denominator *= PI;
 
-    float num   = NdotV;
-    float denom = NdotV * (1.0 - k) + k;
-	
-    return num / denom;
-}
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float alpha)
-{
-    float NdotV = sdot(N, V);
-    float NdotL = sdot(N, L);
-    float ggx2  = GeometrySchlickGGX(NdotV, alpha);
-    float ggx1  = GeometrySchlickGGX(NdotL, alpha);
-	
-    return ggx1 * ggx2;
-}
-vec3 GGXComputeRadiance(vec3 wo, HitInfo hitInfo, out vec3 wi){
-	const float t = 0.5;
-
-	float alpha = clamp(hitInfo.roughness, 0.001, 0.9999);
-	hitInfo.metalness = clamp(hitInfo.metalness, 0.0, 1.0);
-
-	vec3 N = hitInfo.normal;
-	vec3 V = normalize(camera.position - hitInfo.position);
-
-	wi = GGXImportanceSampleHemisphere(hitInfo.normal, wo, t, alpha);
-
-	if (dot(wi, N) < 0) return vec3(0);
-
-	vec3 H = normalize(wi + V);
-
-	vec3 lambert = hitInfo.albedo / PI;
-
-	float D = DistributionGGX(N, H, alpha);
-			
-	vec3 F0 = vec3(0.04);
-	F0 = mix(F0, hitInfo.albedo, hitInfo.metalness);
-	vec3 F = FresnelSchlickRoughness(sdot(H, V), F0, alpha);
-			
-	float G = GeometrySmith(N, V, wi, alpha);
-
-	vec3 cookTorrence = D*F*G/(4.0 * sdot(N, V) * sdot(N, wi) + 0.0001);
-
-	vec3 kS = F;
-	vec3 kD = (vec3(1.0) - kS) * (1.0 - hitInfo.metalness);
-
-	vec3 BRDF = kD * lambert + kS * cookTorrence;
-	float pdf = (1 - t) * (sdot(hitInfo.normal, wi)/PI) + t * (DistributionGGX(N, H, alpha)/4*sdot(wi, H));
-
-	return BRDF / pdf * sdot(N, wi);
+	return numerator / Den(denominator);
 };
+float G_GGX(vec3 n, vec3 x, float a){
+	float a2 = a * a;
+
+	float ndotx = sdot(n, x);
+	float ndotx2 = ndotx * ndotx;
+
+	float numerator = 2.0 * ndotx;
+	float denominator = ndotx + sqrt(a2 + (1.0 - a2) * ndotx2);
+
+	return numerator / Den(denominator);
+};
+float G_smith(vec3 n, vec3 l, vec3 v, float a){
+	return G_GGX(n, l, a) * G_GGX(n, v, a);
+};
+
+vec3 F_schlick(vec3 v, vec3 h, vec3 F0){
+	float vdoth = sdot(v, h);
+
+	return F0 + (1.0 - F0) * pow(1.0 - vdoth, 5.0);
+};
+
+vec3 ImportanceSampleGGX(vec3 n, float a){
+	float e1 = Rand();
+	float e2 = Rand();
+
+	float theta = atan(a * sqrt(e1) / sqrt(1.0 - e1));
+	float phi = 2.0 * PI * e2;
+
+	return normalize(GetTangentSpace(n) * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)));
+};
+
+vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
+	const float specChance = 0.5;
+
+	float a = clamp(hitInfo.roughness, 0.00001, 1.0);
+
+	vec3 n = hitInfo.normal;
+	vec3 v = normalize(camera.position - hitInfo.position);
+
+	if (Rand() <= specChance){
+		vec3 m = ImportanceSampleGGX(n, a);
+		wi = reflect(wo, m);
+		vec3 h = normalize(v + wi);
+
+		if (dot(n, wi) < 0.0) return vec3(0.0);
+
+		float D = D_GGX(n, h, a);
+		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
+		float G = G_smith(n, wi, v, a);
+	
+		vec3 specNumerator = D * F * G;
+		float specDenominator = 4.0 * sdot(n, wi) * sdot(n, v);
+
+		vec3 specular = specNumerator / Den(specDenominator);
+
+		float pdf = D_GGX(n, m, a) * specChance;
+
+		return specular / pdf * sdot(n, wi);
+	}
+	else{
+		wi = SampleHemisphere(n);
+		vec3 h = normalize(v + wi);
+
+		vec3 lambart = hitInfo.albedo / PI;
+
+		float pdf = 1.0 / (2.0 * PI) * (1.0 - specChance);
+
+		vec3 kD = (1.0 - F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness))) * (1.0 - hitInfo.metalness);
+
+		return kD * lambart / pdf * sdot(n, wi);
+	}
+}
