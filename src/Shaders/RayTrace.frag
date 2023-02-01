@@ -247,16 +247,10 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 
 		if (dot(n, wi) < 0.0) return vec3(0.0);
 
-		float D = D_GGX(n, m, a);
 		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
-		float G = G_smith(n, wi, v, a);
-	
-		vec3 specNumerator = D * F * G;
-		float specDenominator = 4.0 * sdot(n, wi) * sdot(n, v);
 
-		vec3 specular = specNumerator / Den(specDenominator);
-
-		float pdf = D_GGX(n, m, a) * specChance;
+		vec3 specular = F / (mix(4.0, 1.0, hitInfo.metalness) * sdot(n, wi));
+		float pdf = specChance;
 
 		return specular / pdf * sdot(n, wi);
 	}
