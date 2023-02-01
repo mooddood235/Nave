@@ -238,7 +238,7 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 	float a = clamp(hitInfo.roughness, 0.00001, 1.0);
 
 	vec3 n = hitInfo.normal;
-	vec3 v = normalize(camera.position - hitInfo.position);
+	vec3 v = -wo;
 
 	if (Rand() <= specChance){
 		vec3 m = ImportanceSampleGGX(n, a);
@@ -248,9 +248,9 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 		if (dot(n, wi) < 0.0) return vec3(0.0);
 
 		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
-		float G = G_smith(n, wi, -wo, a);
+		float G = G_smith(n, wi, v, a);
 
-		vec3 specular = F * G / (4.0 * sdot(n, wi) * sdot(n, -wo)); 
+		vec3 specular = F * G / (4.0 * sdot(n, wi) * sdot(n, v)); 
 
 		float pdf = specChance;
 
