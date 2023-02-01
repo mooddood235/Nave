@@ -99,7 +99,7 @@ int main()
     rayTraceShader.SetVec3("mathSpheres[3].position", mathSphere.GetPosition() - glm::vec3(1, 0, 2));
     rayTraceShader.SetFloat("mathSpheres[3].radius", mathSphere.GetRadius());
     rayTraceShader.SetVec3("mathSpheres[3].color", glm::vec3(0, 0, 1));
-    rayTraceShader.SetFloat("mathSpheres[3].roughness", 0.0f);
+    rayTraceShader.SetFloat("mathSpheres[3].roughness", 0.05f);
     rayTraceShader.SetFloat("mathSpheres[3].metalness", 0.0f);
 
     rayTraceShader.SetUnsignedInt("maxDepth", 50);
@@ -188,7 +188,7 @@ void InitGLFW() {
     WINDOWWIDTH = videoMode->width;
     WINDOWHEIGHT = videoMode->height;
 
-    window = glfwCreateWindow(videoMode->width , videoMode->height, "Nave", monitor, NULL);
+    window = glfwCreateWindow(WINDOWWIDTH , WINDOWHEIGHT, "Nave", monitor, NULL);
 
     if (!window) {
         std::cout << "ERROR: Failed to create GLFW window" << std::endl;
