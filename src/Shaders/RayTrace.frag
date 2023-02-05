@@ -53,6 +53,7 @@ float G_GGX(vec3 n, vec3 x, float a);
 float G_smith(vec3 n, vec3 l, vec3 v, float a);
 vec3 F_schlick(vec3 v, vec3 h, vec3 F0);
 vec3 ImportanceSampleGGX(vec3 n, float a);
+vec3 ImportanceSampleGGXVNDF(vec3 N, vec3 V, float alpha);
 
 // Intersection functions
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
@@ -231,7 +232,33 @@ vec3 ImportanceSampleGGX(vec3 n, float a){
 
 	return normalize(GetTangentSpace(n) * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)));
 };
+vec3 ImportanceSampleGGXVNDF(vec3 n, vec3 v, float a)
+{
+	float U1 = Rand();
+	float U2 = Rand();
 
+	v = normalize(inverse(GetTangentSpace(n)) * v);
+
+	// Section 3.2: transforming the view direction to the hemisphere configuration
+	vec3 Vh = normalize(vec3(a * v.x, a * v.y, v.z));
+	// Section 4.1: orthonormal basis (with special case if cross product is zero)
+	float lensq = Vh.x * Vh.x + Vh.y * Vh.y;
+	vec3 T1 = lensq > 0 ? vec3(-Vh.y, Vh.x, 0) * inversesqrt(lensq) : vec3(1,0,0);
+	vec3 T2 = cross(Vh, T1);
+	// Section 4.2: parameterization of the projected area
+	float r = sqrt(U1);
+	float phi = 2.0 * PI * U2;
+	float t1 = r * cos(phi);
+	float t2 = r * sin(phi);
+	float s = 0.5 * (1.0 + Vh.z);
+	t2 = (1.0 - s)*sqrt(1.0 - t1*t1) + s*t2;
+	// Section 4.3: reprojection onto hemisphere
+	vec3 Nh = t1*T1 + t2*T2 + sqrt(max(0.0, 1.0 - t1*t1 - t2*t2))*Vh;
+	// Section 3.4: transforming the normal back to the ellipsoid configuration
+	vec3 Ne = normalize(vec3(a * Nh.x, a * Nh.y, max(0.0, Nh.z)));
+
+	return normalize(GetTangentSpace(n) * Ne);
+}
 vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 	const float specChance = 0.5;
 
@@ -241,7 +268,8 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 	vec3 v = -wo;
 
 	if (Rand() <= specChance){
-		vec3 m = ImportanceSampleGGX(n, a);
+		vec3 m = ImportanceSampleGGXVNDF(n, v, a);
+
 		wi = reflect(wo, m);
 		vec3 h = normalize(v + wi);
 
@@ -250,7 +278,7 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
 		float G = G_smith(n, wi, v, a);
 
-		vec3 specular = F * G / (4.0 * sdot(n, wi) * sdot(n, v)); 
+		vec3 specular = F * G / (4.0 * sdot(n, wi) * sdot(n, v) + 0.0001); 
 
 		float pdf = specChance;
 
