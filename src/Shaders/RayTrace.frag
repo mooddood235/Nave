@@ -278,11 +278,7 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
 		float G = G_smith(n, wi, v, a);
 
-		vec3 specular = F * G / (4.0 * sdot(n, wi) * sdot(n, v) + 0.0001); 
-
-		float pdf = specChance;
-
-		return specular / pdf * sdot(n, wi);
+		return F * G / (G_GGX(n, v, a));
 	}
 	else{
 		wi = SampleHemisphere(n);
