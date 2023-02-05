@@ -9,7 +9,6 @@
 class ShaderProgram{
 public:
 	ShaderProgram(std::string vertPath, std::string fragPath);
-	~ShaderProgram();
 	void Use();
 	static void Unuse();
 	void SetMat4(std::string uniformName, glm::mat4 value);

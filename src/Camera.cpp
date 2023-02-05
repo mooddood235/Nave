@@ -10,6 +10,10 @@ Camera::Camera(float yFOVInDegrees, float nearClip, float farClip) {
 
 	focalLength = (float)WINDOWHEIGHT / (2.0f * glm::tan(yFOVInDegrees / 2));
 }
+Camera::Camera(glm::vec3 position, float yFOVInDegrees, float nearClip, float farClip) {
+	Translate(position);
+	Camera::Camera(yFOVInDegrees, nearClip, farClip);
+}
 void Camera::ProcessInput() {
 	// Process move
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) Translate(glm::vec3(0, 0, -1) * moveSpeed * deltaTime, Space::local);

@@ -7,6 +7,7 @@
 class Camera : public GameObject{
 public:
 	Camera(float yFOVInDegrees, float nearClip, float farClip);
+	Camera(glm::vec3 position, float yFOVInDegrees, float nearClip, float farClip);
 	glm::mat4 GetViewMatrix();
 	glm::mat4 GetProjectionMatrix();
 	glm::mat4 GetRotationMatrix();

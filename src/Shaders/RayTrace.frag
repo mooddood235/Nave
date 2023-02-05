@@ -42,7 +42,8 @@ const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0), vec3(0), 0, 0);
 float Rand();
 vec3 At(Ray ray, float t);
 vec3 SampleEnvironmentMap(vec3 direction);
-vec3 SampleHemisphere(vec3 normal);
+vec3 SampleHemisphere(vec3 n);
+vec3 CosineSampleHemisphere(vec3 n);
 mat3 GetTangentSpace(vec3 normal);
 float sdot(vec3 v0, vec3 v1);
 
@@ -73,8 +74,9 @@ uint _seed;
 uniform sampler2D environmentMap;
 
 uniform Camera camera;
-uniform MathSphere mathSpheres[10];
 uniform uint maxDepth;
+
+uniform MathSphere mathSpheres[10];
 
 
 void main(){
@@ -167,15 +169,21 @@ float sdot(vec3 v0, vec3 v1){
 	return max(0.0, dot(v0, v1));
 };
 
-vec3 SampleHemisphere(vec3 normal){
+vec3 SampleHemisphere(vec3 n){
 	// Uniformly sample hemisphere direction
     float cosTheta = Rand();
     float sinTheta = sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
     float phi = 2 * PI * Rand();
     vec3 sampleVector = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
     // Transform direction to world space
-    return normalize(GetTangentSpace(normal) * sampleVector);
+    return normalize(GetTangentSpace(n) * sampleVector);
 };
+vec3 CosineSampleHemisphere(vec3 n){
+	float theta = acos(sqrt(Rand()));
+	float phi = 2.0 * PI * Rand();
+
+	return normalize(GetTangentSpace(n) * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)));
+}
 
 mat3 GetTangentSpace(vec3 normal){
     // Choose a helper vector for the cross product

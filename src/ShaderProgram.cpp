@@ -6,9 +6,6 @@
 ShaderProgram::ShaderProgram(std::string vertPath, std::string fragPath) {
 	shaderProgram = LinkProgram(CompileShader(vertPath, GL_VERTEX_SHADER), CompileShader(fragPath, GL_FRAGMENT_SHADER));
 }
-ShaderProgram::~ShaderProgram() {
-	glDeleteProgram(shaderProgram);
-}
 void ShaderProgram::Use() {
 	glUseProgram(shaderProgram);
 }

@@ -11,6 +11,7 @@
 #include "Camera.h"
 #include "MathSphere.h"
 #include "EnvironmentMap.h"
+#include "../Scenes/DefaultScene.h"
 
 void InitGLFW();
 void InitGlAD();
@@ -67,9 +68,12 @@ int main()
     // Load environment maps
     EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
     
-    // Load scene objects
+    // Load camera
     Camera camera = Camera(45, 0.1, 100);
     camera.Translate(glm::vec3(0, 0, 5));
+
+    // Load scene
+    DefaultScene defaultScene = DefaultScene();
 
     MathSphere mathSphere = MathSphere();
 
@@ -78,34 +82,12 @@ int main()
     rayTraceShader.SetUnsignedInt("camera.viewPortWidth", WINDOWWIDTH);
     rayTraceShader.SetUnsignedInt("camera.viewPortHeight", WINDOWHEIGHT);
 
-    rayTraceShader.SetVec3("mathSpheres[1].position", mathSphere.GetPosition() - glm::vec3(0, 51, 0));
-    rayTraceShader.SetFloat("mathSpheres[1].radius", mathSphere.GetRadius() * 50);
-    rayTraceShader.SetVec3("mathSpheres[1].color", glm::vec3(1.0f));
-    rayTraceShader.SetFloat("mathSpheres[1].roughness", 1.0f);
-    rayTraceShader.SetFloat("mathSpheres[1].metalness", 0.0f);
-
-    rayTraceShader.SetVec3("mathSpheres[0].position", mathSphere.GetPosition());
-    rayTraceShader.SetFloat("mathSpheres[0].radius", mathSphere.GetRadius());
-    rayTraceShader.SetVec3("mathSpheres[0].color", glm::vec3(1.0f, 0, 0));
-    rayTraceShader.SetFloat("mathSpheres[0].roughness", 0.0f);
-    rayTraceShader.SetFloat("mathSpheres[0].metalness", 0.0f);
-
-    rayTraceShader.SetVec3("mathSpheres[2].position", mathSphere.GetPosition() - glm::vec3(2, 0, 0));
-    rayTraceShader.SetFloat("mathSpheres[2].radius", mathSphere.GetRadius());
-    rayTraceShader.SetVec3("mathSpheres[2].color", glm::vec3(1.0f));
-    rayTraceShader.SetFloat("mathSpheres[2].roughness", 0.0f);
-    rayTraceShader.SetFloat("mathSpheres[2].metalness", 1.0f);
-
-    rayTraceShader.SetVec3("mathSpheres[3].position", mathSphere.GetPosition() - glm::vec3(1, 0, 2));
-    rayTraceShader.SetFloat("mathSpheres[3].radius", mathSphere.GetRadius());
-    rayTraceShader.SetVec3("mathSpheres[3].color", glm::vec3(0, 0, 1));
-    rayTraceShader.SetFloat("mathSpheres[3].roughness", 0.05f);
-    rayTraceShader.SetFloat("mathSpheres[3].metalness", 0.0f);
+    defaultScene.SetMathSpheres(rayTraceShader);
 
     rayTraceShader.SetUnsignedInt("maxDepth", 50);
 
     //---------------------------------------------------
-    const unsigned int maxSamples = 8000;
+    const unsigned int maxSamples = 1000;
     unsigned int currSample = 1;
 
     glm::mat4 lastCameraModelMatrix = camera.GetModelMatrix();
@@ -136,8 +118,11 @@ int main()
         std::cout << currSample << "/" << maxSamples << std::endl;
 
         // Ray trace
-
         glBindFramebuffer(GL_FRAMEBUFFER, rayTraceFBO);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, renderTextures[0]);
+        rayTraceShader.SetInt("cumulativeRenderTexture", 0);
 
         rayTraceShader.SetUnsignedInt("currSample", currSample);
         rayTraceShader.SetUnsignedInt("seed", rand());
@@ -147,10 +132,6 @@ int main()
         rayTraceShader.SetVec3("camera.yAxis", camera.GetYAxis());
         rayTraceShader.SetVec3("camera.zAxis", camera.GetZAxis());
         rayTraceShader.SetFloat("camera.focalLength", camera.GetFocalLength());
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderTextures[0]);
-        rayTraceShader.SetInt("cumulativeRenderTexture", 0);
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, environmentMap.GetEnvironmentMap());
