@@ -26,17 +26,25 @@ struct HitInfo{
 	float metalness;
 };
 
+struct Vertex{
+	vec3 position;
+};
+
+
 struct MathSphere{
 	vec3 position;
 	float radius;
-	vec3 color;
+	vec3 albedo;
 	float roughness;
 	float metalness;
 };
 
+
+
 // Constants
 const float PI = 3.14159265359;
 const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0), vec3(0), 0, 0);
+const uint MAXVERTEXCOUNT = 1000;
 
 // Helper functions
 float Rand();
@@ -58,6 +66,7 @@ vec3 ImportanceSampleGGXVNDF(vec3 N, vec3 V, float alpha);
 
 // Intersection functions
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
+HitInfo Hit_Triangle(vec3 v0, vec3 v1, vec3 v2, Ray ray);
 
 in vec2 uv;
 
@@ -77,7 +86,18 @@ uniform Camera camera;
 uniform uint maxDepth;
 
 uniform MathSphere mathSpheres[10];
+uniform uint mathSphereCount;
 
+layout (std140) uniform Vertices{
+	vec3 vertices[100];
+};
+layout (std140) uniform Indices{
+	uint indices[100];
+};
+uniform uint indexCount;
+
+uniform vec3 _vertices[100];
+uniform uint _indices[100];
 
 void main(){
 	_seed = seed;
@@ -98,10 +118,20 @@ void main(){
 		}
 		HitInfo closestHit = NoHit;
 
-		for (uint i = 0; i < mathSpheres.length; i++){
+		for (uint i = 0; i < mathSphereCount; i++){
 			HitInfo hitInfo = Hit_MathSphere(mathSpheres[i], ray);
 			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
 		}
+		for (uint i = 0; i < indexCount / 3; i++){
+			vec3 v0 = vertices[indices[i * 3]];
+			vec3 v1 = vertices[indices[i * 3 + 1]];
+			vec3 v2 = vertices[indices[i * 3 + 2]];
+			
+
+			HitInfo hitInfo = Hit_Triangle(v0, v1, v2, ray);
+			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
+		}
+
 		if (closestHit.didHit){
 			vec3 wi;
 
@@ -145,9 +175,46 @@ HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
 		if (t < 0) return NoHit;
 		
 		vec3 hitPos = At(ray, t);
-		return HitInfo(true, t, hitPos, normalize(hitPos - mathSphere.position), mathSphere.color, mathSphere.roughness, mathSphere.metalness);
+		return HitInfo(true, t, hitPos, normalize(hitPos - mathSphere.position), mathSphere.albedo, mathSphere.roughness, mathSphere.metalness);
 	}
 };
+HitInfo Hit_Triangle(vec3 v0, vec3 v1, vec3 v2, Ray ray){
+	const float EPSILON = 0.00001;
+    // find vectors for two edges sharing v0
+
+    vec3 edge1 = v1 - v0;
+    vec3 edge2 = v2 - v0;
+    // begin calculating determinant - also used to calculate U parameter
+    vec3 pvec = cross(ray.direction, edge2);
+    // if determinant is near zero, ray lies in plane of triangle
+    float det = dot(edge1, pvec);
+    // use backface culling
+    if (det < EPSILON){
+        return NoHit;
+    }
+    float inv_det = 1.0f / det;
+    // calculate distance from v0 to ray origin
+    vec3 tvec = ray.origin - v0;
+    // calculate U parameter and test bounds
+    float u = dot(tvec, pvec) * inv_det;
+    if (u < 0.0 || u > 1.0f){
+        return NoHit;
+    }
+    // prepare to test V parameter
+    vec3 qvec = cross(tvec, edge1);
+    // calculate V parameter and test bounds
+    float v = dot(ray.direction, qvec) * inv_det;
+    if (v < 0.0 || u + v > 1.0f){
+        return NoHit;
+    }
+    float t = dot(edge2, qvec) * inv_det;
+
+    if (t <= EPSILON){
+        return NoHit;
+    }
+
+    return HitInfo(true, t, At(ray, t), normalize(cross(edge1, edge2)), vec3(u, v, 0), 0.0, 1.0);
+}
 
 float Rand(){
 	const float MAXHASH = 4294967295.0;
@@ -270,7 +337,7 @@ vec3 ImportanceSampleGGXVNDF(vec3 n, vec3 v, float a)
 vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 	const float specChance = 0.5;
 
-	float a = clamp(hitInfo.roughness, 0.00001, 1.0);
+	float a = clamp(hitInfo.roughness, 0.0, 1.0);
 
 	vec3 n = hitInfo.normal;
 	vec3 v = -wo;

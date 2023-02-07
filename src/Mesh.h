@@ -9,6 +9,8 @@ class Mesh : public GameObject{
 public:
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
 	void Draw();
+	std::vector<Vertex> GetVertices();
+	std::vector<unsigned int> GetIndices();
 private:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;

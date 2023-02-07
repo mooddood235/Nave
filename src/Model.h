@@ -6,11 +6,11 @@
 #include "Mesh.h"
 #include "GameObject.h"
 
-
 class Model : public GameObject{
 public:
 	Model(std::string modelPath);
 	void Draw();
+	std::vector<Mesh> GetMeshes();
 private:
 	std::string modelPath;
 	std::vector<Mesh> meshes;

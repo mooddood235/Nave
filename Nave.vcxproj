@@ -145,6 +145,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\SceneData.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="Scenes\DefaultScene.cpp" />
     <ClCompile Include="src\EnvironmentMap.cpp" />
@@ -160,6 +162,7 @@
     <ClCompile Include="src\Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\SceneData.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="Scenes\DefaultScene.h" />
     <ClInclude Include="src\Scene.h" />

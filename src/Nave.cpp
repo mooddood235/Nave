@@ -66,7 +66,7 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
+    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Studio.hdr");
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
@@ -83,11 +83,12 @@ int main()
     rayTraceShader.SetUnsignedInt("camera.viewPortHeight", WINDOWHEIGHT);
 
     defaultScene.SetMathSpheres(rayTraceShader);
+    defaultScene.SetMeshes(rayTraceShader);
 
     rayTraceShader.SetUnsignedInt("maxDepth", 50);
 
     //---------------------------------------------------
-    const unsigned int maxSamples = 1000;
+    const unsigned int maxSamples = 3000;
     unsigned int currSample = 1;
 
     glm::mat4 lastCameraModelMatrix = camera.GetModelMatrix();

@@ -6,10 +6,12 @@
 #include "../src/Camera.h"
 #include "../src/EnvironmentMap.h"
 #include "../src/ShaderProgram.h"
+#include "../src/Model.h"
 
 class DefaultScene : public Scene{
 public:
     void SetMathSpheres(ShaderProgram rayTraceShader);
+    void SetMeshes(ShaderProgram rayTraceShader);
 private:
     MathSphere mathSpheres[4] = {
         MathSphere(Material(glm::vec3(1.0f, 0.0, 0.0f), 0.0f, 0.0f)),
@@ -17,5 +19,6 @@ private:
         MathSphere(glm::vec3(-1.0f, 0.0f, -2.0f), 1.0f, Material(glm::vec3(0.0f, 0.0f, 1.0f), 0.05f, 0.0f)),
         MathSphere(glm::vec3(0.0f, -51.0f, 0.0f), 50.0f, Material(glm::vec3(1.0), 1.0f, 0.0f))
     };
+    Model cube = Model("Models/Cube/Cube.fbx");
 };
 

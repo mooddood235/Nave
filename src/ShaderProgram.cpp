@@ -36,6 +36,10 @@ void ShaderProgram::SetUnsignedInt(std::string uniformName, unsigned int value) 
 	unsigned int location = glGetUniformLocation(shaderProgram, uniformName.c_str());
 	glProgramUniform1ui(shaderProgram, location, value);
 }
+void ShaderProgram::BindUniformBlock(std::string blockName, unsigned int bind) {
+	unsigned int blockIndex = glGetUniformBlockIndex(shaderProgram, blockName.c_str());
+	glUniformBlockBinding(shaderProgram, blockIndex, bind);
+}
 unsigned int ShaderProgram::CompileShader(std::string path, GLenum type) {
 	if (!(type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER)) {
 		std::cout << "ERROR: Cannot compile shader of type <" << std::to_string(type) << ">" << std::endl;

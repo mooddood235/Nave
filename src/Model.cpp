@@ -58,3 +58,6 @@ Mesh Model::aiMeshToMesh(aiMesh* mesh, const aiScene* scene) {
 glm::vec3 Model::aiVector3DToGLMVec3(aiVector3D vector) {
 	return glm::vec3(vector.x, vector.y, vector.z);
 }
+std::vector<Mesh> Model::GetMeshes() {
+	return meshes;
+}
