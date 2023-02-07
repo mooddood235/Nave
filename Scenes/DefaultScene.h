@@ -10,6 +10,7 @@
 
 class DefaultScene : public Scene{
 public:
+    DefaultScene();
     void SetMathSpheres(ShaderProgram rayTraceShader);
     void SetMeshes(ShaderProgram rayTraceShader);
 private:

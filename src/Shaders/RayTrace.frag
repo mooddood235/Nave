@@ -88,16 +88,13 @@ uniform uint maxDepth;
 uniform MathSphere mathSpheres[10];
 uniform uint mathSphereCount;
 
-layout (std140) uniform Vertices{
-	vec3 vertices[100];
+layout (std140) buffer Vertices{
+	vec3 vertices[];
 };
-layout (std140) uniform Indices{
-	uint indices[100];
+layout (std140) buffer Indices{
+	uint indices[];
 };
 uniform uint indexCount;
-
-uniform vec3 _vertices[100];
-uniform uint _indices[100];
 
 void main(){
 	_seed = seed;
@@ -213,7 +210,7 @@ HitInfo Hit_Triangle(vec3 v0, vec3 v1, vec3 v2, Ray ray){
         return NoHit;
     }
 
-    return HitInfo(true, t, At(ray, t), normalize(cross(edge1, edge2)), vec3(u, v, 0), 0.0, 1.0);
+    return HitInfo(true, t, At(ray, t), normalize(cross(edge1, edge2)), vec3(1.0), 0.0, 0.0);
 }
 
 float Rand(){

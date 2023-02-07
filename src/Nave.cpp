@@ -66,7 +66,7 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Studio.hdr");
+    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);

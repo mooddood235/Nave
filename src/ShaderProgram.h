@@ -18,6 +18,7 @@ public:
 	void SetInt(std::string uniformName, int value);
 	void SetUnsignedInt(std::string uniformName, unsigned int value);
 	void BindUniformBlock(std::string blockName, unsigned int bind);
+	void BindStorageBlock(std::string blockName, unsigned int bind);
 private:
 	unsigned int shaderProgram;
 
