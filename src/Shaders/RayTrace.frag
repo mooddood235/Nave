@@ -126,7 +126,7 @@ void main(){
 
 	Ray ray = Ray(camera.position, normalize(worldUV - camera.position));
 
-	BVHNode stack[100];
+	BVHNode stack[50];
 
 	for (uint depth = 1; depth <= maxDepth + 1; depth++){
 		if (depth == maxDepth + 1){
@@ -176,7 +176,7 @@ void main(){
 			vec3 wi;
 
 			radiance *= ComputeRadianceGGX(ray.direction, closestHit, wi);
-
+	
 			ray.origin = closestHit.position + closestHit.normal * 0.001;
 			ray.direction = wi;
 		}
@@ -245,7 +245,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray){
     if (t > EPSILON) // ray intersection
     {
 		float w = 1.0 - u - v;
-        return HitInfo(true, t, At(ray, t), normalize(v0.normal * w + v1.normal * u + v2.normal * v), vec3(1.0, 0, 0), 0.0, 0.0);
+        return HitInfo(true, t, At(ray, t), normalize(v0.normal * w + v1.normal * u + v2.normal * v), vec3(1, 0, 0), 0.0, 0.0);
     }
     else // This means that there is a line intersection but not a ray intersection.
         return NoHit;
@@ -403,8 +403,8 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 
 		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
 		float G = G_smith(n, wi, v, a);
-
-		return F * G / (G_GGX(n, v, a));
+	
+		return F * G / (G_GGX(n, v, a) + 0.00001);
 	}
 	else{
 		wi = SampleHemisphere(n);
