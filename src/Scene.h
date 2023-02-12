@@ -2,12 +2,25 @@
 #include "ShaderProgram.h"
 #include "SceneData.h"
 #include "Model.h"
+#include "MathSphere.h"
 
 class Scene{
 public:
-	virtual void SetMathSpheres(ShaderProgram rayTraceShader) = 0;
-	virtual void SetMeshes(ShaderProgram rayTraceShader) = 0;
+	void SetMathSpheres(ShaderProgram rayTraceShader);
+	void SetMeshes(ShaderProgram rayTraceShader);
 
-	static SceneData GetData(std::vector<Model> models);
+	SceneData GetData();
+protected:
+	void GenerateSSBOs();
+
+	std::vector<MathSphere> mathSpheres;
+	std::vector<Model> models;
+
+	unsigned int indexCount;
+	unsigned int nodeCount;
+
+	unsigned int verticesSSBO;
+	unsigned int indicesSSBO;
+	unsigned int BVHSSBO;
 };
 

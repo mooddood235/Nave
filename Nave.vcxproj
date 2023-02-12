@@ -145,6 +145,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AABB.cpp" />
+    <ClCompile Include="src\BVHNode.cpp" />
+    <ClCompile Include="src\BVH.cpp" />
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\SceneData.cpp" />
     <ClCompile Include="src\Material.cpp" />
@@ -162,6 +165,9 @@
     <ClCompile Include="src\Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AABB.h" />
+    <ClInclude Include="src\BVHNode.h" />
+    <ClInclude Include="src\BVH.h" />
     <ClInclude Include="src\SceneData.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="Scenes\DefaultScene.h" />

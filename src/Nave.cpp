@@ -85,7 +85,7 @@ int main()
     defaultScene.SetMathSpheres(rayTraceShader);
     defaultScene.SetMeshes(rayTraceShader);
 
-    rayTraceShader.SetUnsignedInt("maxDepth", 50);
+    rayTraceShader.SetUnsignedInt("maxDepth", 25);
 
     //---------------------------------------------------
     const unsigned int maxSamples = 3000;

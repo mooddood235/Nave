@@ -28,8 +28,21 @@ struct HitInfo{
 
 struct Vertex{
 	vec3 position;
+	float pad0;
+	vec3 normal;
+	float pad1;
 };
+struct BVHNode{
+	uint isLeaf;
+	
+	uint left;
+	uint right;
 
+	float pad0;
+
+	vec3 cornerMin;
+	vec3 cornerMax;
+};
 
 struct MathSphere{
 	vec3 position;
@@ -66,7 +79,8 @@ vec3 ImportanceSampleGGXVNDF(vec3 N, vec3 V, float alpha);
 
 // Intersection functions
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
-HitInfo Hit_Triangle(vec3 v0, vec3 v1, vec3 v2, Ray ray);
+HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray);
+HitInfo Hit_AABB(vec3 cornerMin, vec3 cornerMax, Ray ray);
 
 in vec2 uv;
 
@@ -89,12 +103,16 @@ uniform MathSphere mathSpheres[10];
 uniform uint mathSphereCount;
 
 layout (std140) buffer Vertices{
-	vec3 vertices[];
+	Vertex vertices[];
 };
 layout (std140) buffer Indices{
 	uint indices[];
 };
+layout (std140) buffer BVH{
+	BVHNode bvh[];
+};
 uniform uint indexCount;
+uniform uint nodeCount;
 
 void main(){
 	_seed = seed;
@@ -108,6 +126,8 @@ void main(){
 
 	Ray ray = Ray(camera.position, normalize(worldUV - camera.position));
 
+	BVHNode stack[100];
+
 	for (uint depth = 1; depth <= maxDepth + 1; depth++){
 		if (depth == maxDepth + 1){
 			radiance = vec3(0.0);
@@ -119,16 +139,39 @@ void main(){
 			HitInfo hitInfo = Hit_MathSphere(mathSpheres[i], ray);
 			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
 		}
-		for (uint i = 0; i < indexCount / 3; i++){
-			vec3 v0 = vertices[indices[i * 3]];
-			vec3 v1 = vertices[indices[i * 3 + 1]];
-			vec3 v2 = vertices[indices[i * 3 + 2]];
-			
 
-			HitInfo hitInfo = Hit_Triangle(v0, v1, v2, ray);
-			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
+		uint stackSize = 1;
+		stack[0] = bvh[0];
+
+		while (stackSize > 0){
+			BVHNode node = stack[stackSize - 1];
+			stackSize--;
+
+			if (node.isLeaf == 0){
+				BVHNode leftNode = bvh[node.left];
+				BVHNode rightNode = bvh[node.right];
+
+				HitInfo leftHitInfo = Hit_AABB(leftNode.cornerMin, leftNode.cornerMax, ray);
+				HitInfo rightHitInfo = Hit_AABB(rightNode.cornerMin, rightNode.cornerMax, ray);
+
+				if (leftHitInfo.didHit){
+					stack[stackSize] = leftNode;
+					stackSize++;
+				}
+				if (rightHitInfo.didHit){
+					stack[stackSize] = rightNode;
+					stackSize++;			
+				}
+			}
+			else{
+				Vertex v0 = vertices[indices[node.left]];
+				Vertex v1 = vertices[indices[node.left + 1]];
+				Vertex v2 = vertices[indices[node.left + 2]];
+
+				HitInfo hitInfo = Hit_Triangle(v0, v1, v2, ray);
+				if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
+			}
 		}
-
 		if (closestHit.didHit){
 			vec3 wi;
 
@@ -175,44 +218,54 @@ HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
 		return HitInfo(true, t, hitPos, normalize(hitPos - mathSphere.position), mathSphere.albedo, mathSphere.roughness, mathSphere.metalness);
 	}
 };
-HitInfo Hit_Triangle(vec3 v0, vec3 v1, vec3 v2, Ray ray){
-	const float EPSILON = 0.00001;
-    // find vectors for two edges sharing v0
-
-    vec3 edge1 = v1 - v0;
-    vec3 edge2 = v2 - v0;
-    // begin calculating determinant - also used to calculate U parameter
-    vec3 pvec = cross(ray.direction, edge2);
-    // if determinant is near zero, ray lies in plane of triangle
-    float det = dot(edge1, pvec);
-    // use backface culling
-    if (det < EPSILON){
+HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray){
+	const float EPSILON = 0.0000001;
+    vec3 vertex0 = v0.position;
+    vec3 vertex1 = v1.position;  
+    vec3 vertex2 = v2.position;
+    vec3 edge1, edge2, h, s, q;
+    float a,f,u,v;
+    edge1 = vertex1 - vertex0;
+    edge2 = vertex2 - vertex0;
+    h = cross(ray.direction, edge2);
+    a = dot(edge1, h);
+    if (a > -EPSILON && a < EPSILON)
+        return NoHit;    // This ray is parallel to this triangle.
+    f = 1.0/a;
+    s = ray.origin - vertex0;
+    u = f * dot(s, h);
+    if (u < 0.0 || u > 1.0)
         return NoHit;
-    }
-    float inv_det = 1.0f / det;
-    // calculate distance from v0 to ray origin
-    vec3 tvec = ray.origin - v0;
-    // calculate U parameter and test bounds
-    float u = dot(tvec, pvec) * inv_det;
-    if (u < 0.0 || u > 1.0f){
+    q = cross(s, edge1);
+    v = f * dot(ray.direction, q);
+    if (v < 0.0 || u + v > 1.0)
         return NoHit;
+    // At this stage we can compute t to find out where the intersection point is on the line.
+    float t = f * dot(edge2, q);
+    if (t > EPSILON) // ray intersection
+    {
+		float w = 1.0 - u - v;
+        return HitInfo(true, t, At(ray, t), normalize(v0.normal * w + v1.normal * u + v2.normal * v), vec3(1.0, 0, 0), 0.0, 0.0);
     }
-    // prepare to test V parameter
-    vec3 qvec = cross(tvec, edge1);
-    // calculate V parameter and test bounds
-    float v = dot(ray.direction, qvec) * inv_det;
-    if (v < 0.0 || u + v > 1.0f){
+    else // This means that there is a line intersection but not a ray intersection.
         return NoHit;
-    }
-    float t = dot(edge2, qvec) * inv_det;
-
-    if (t <= EPSILON){
-        return NoHit;
-    }
-
-    return HitInfo(true, t, At(ray, t), normalize(cross(edge1, edge2)), vec3(1.0), 0.0, 0.0);
 }
+    
 
+ HitInfo Hit_AABB(vec3 cornerMin, vec3 cornerMax, Ray ray){
+	float tx1 = (cornerMin.x - ray.origin.x) / ray.direction.x, tx2 = (cornerMax.x - ray.origin.x) / ray.direction.x;
+    float tmin = min( tx1, tx2 ), tmax = max( tx1, tx2 );
+    float ty1 = (cornerMin.y - ray.origin.y) / ray.direction.y, ty2 = (cornerMax.y - ray.origin.y) / ray.direction.y;
+    tmin = max( tmin, min( ty1, ty2 ) ), tmax = min( tmax, max( ty1, ty2 ) );
+    float tz1 = (cornerMin.z - ray.origin.z) / ray.direction.z, tz2 = (cornerMax.z - ray.origin.z) / ray.direction.z;
+    tmin = max( tmin, min( tz1, tz2 ) ), tmax = min( tmax, max( tz1, tz2 ) );
+    if (tmax >= tmin && tmin >= 0){
+		HitInfo hitInfo;
+		hitInfo.didHit = true;
+		return hitInfo;
+	}
+	return NoHit;
+}
 float Rand(){
 	const float MAXHASH = 4294967295.0;
 
