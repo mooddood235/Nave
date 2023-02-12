@@ -154,11 +154,11 @@ void main(){
 				HitInfo leftHitInfo = Hit_AABB(leftNode.cornerMin, leftNode.cornerMax, ray);
 				HitInfo rightHitInfo = Hit_AABB(rightNode.cornerMin, rightNode.cornerMax, ray);
 
-				if (leftHitInfo.didHit){
+				if (leftHitInfo.didHit && leftHitInfo.t < closestHit.t){
 					stack[stackSize] = leftNode;
 					stackSize++;
 				}
-				if (rightHitInfo.didHit){
+				if (rightHitInfo.didHit && rightHitInfo.t < closestHit.t){
 					stack[stackSize] = rightNode;
 					stackSize++;			
 				}
@@ -262,6 +262,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray){
     if (tmax >= tmin && tmin >= 0){
 		HitInfo hitInfo;
 		hitInfo.didHit = true;
+		hitInfo.t = tmin;
 		return hitInfo;
 	}
 	return NoHit;
