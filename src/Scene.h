@@ -16,8 +16,8 @@ protected:
 	std::vector<MathSphere> mathSpheres;
 	std::vector<Model> models;
 
-	unsigned int indexCount;
-	unsigned int nodeCount;
+	unsigned int indexCount = 0;
+	unsigned int nodeCount = 0;
 
 	unsigned int verticesSSBO;
 	unsigned int indicesSSBO;

@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <vector>
+#include <random>
 
 #include "WindowInfo.h"
 #include "ShaderProgram.h"
@@ -86,9 +87,13 @@ int main()
     defaultScene.SetMeshes(rayTraceShader);
 
     rayTraceShader.SetUnsignedInt("maxDepth", 25);
+    
+    std::random_device rand_device;
+    std::mt19937 generator(rand_device());
+    std::uniform_int_distribution<int> distr(0, 1000000);
 
     //---------------------------------------------------
-    const unsigned int maxSamples = 3000;
+    const unsigned int maxSamples = 8000;
     unsigned int currSample = 1;
 
     glm::mat4 lastCameraModelMatrix = camera.GetModelMatrix();
@@ -126,7 +131,8 @@ int main()
         rayTraceShader.SetInt("cumulativeRenderTexture", 0);
 
         rayTraceShader.SetUnsignedInt("currSample", currSample);
-        rayTraceShader.SetUnsignedInt("seed", rand());
+
+        rayTraceShader.SetUnsignedInt("seed", distr(generator));
 
         rayTraceShader.SetVec3("camera.position", camera.GetPosition());
         rayTraceShader.SetVec3("camera.xAxis", camera.GetXAxis());
