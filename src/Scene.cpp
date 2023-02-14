@@ -61,6 +61,8 @@ void Scene::SetMathSpheres(ShaderProgram rayTraceShader) {
 		rayTraceShader.SetVec3(mathSphereString + ".albedo", mathSphere.material.albedo);
 		rayTraceShader.SetFloat(mathSphereString + ".roughness", mathSphere.material.roughness);
 		rayTraceShader.SetFloat(mathSphereString + ".metalness", mathSphere.material.metalness);
+		rayTraceShader.SetVec3(mathSphereString + ".emission", mathSphere.material.emission);
+
 	}
 	rayTraceShader.SetUnsignedInt("mathSphereCount", mathSpheres.size());
 }

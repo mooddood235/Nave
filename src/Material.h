@@ -5,8 +5,9 @@ struct Material{
 	glm::vec3 albedo = glm::vec3(1.0f);
 	float roughness = 1.0f;
 	float metalness = 0.0f;
+	glm::vec3 emission = glm::vec3(0.0f);
 
 	Material();
-	Material(glm::vec3 albedo, float roughness, float metalness);
+	Material(glm::vec3 albedo, float roughness, float metalness, glm::vec3 emission);
 };
 

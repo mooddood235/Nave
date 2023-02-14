@@ -3,10 +3,10 @@
 
 DefaultScene::DefaultScene() {
     mathSpheres = {
-        MathSphere(Material(glm::vec3(1.0f, 0.0, 0.0f), 0.0f, 0.0f)),
-        MathSphere(glm::vec3(-2.0f, 0.0, 0.0f), 1.0f, Material(glm::vec3(1.0f), 0.0f, 1.0f)),
-        MathSphere(glm::vec3(-1.0f, 0.0f, -2.0f), 1.0f, Material(glm::vec3(0.0f, 0.0f, 1.0f), 0.05f, 0.0f)),
-        MathSphere(glm::vec3(0.0f, -51.0f, 0.0f), 50.0f, Material(glm::vec3(1.0), 1.0f, 0.0f))
+        MathSphere(Material(glm::vec3(1.0f, 0.0, 0.0f), 0.0f, 0.0f, glm::vec3(0.0f))),
+        MathSphere(glm::vec3(-2.0f, 0.0, 0.0f), 1.0f, Material(glm::vec3(1.0f), 0.0f, 1.0f, glm::vec3(0.0f))),
+        MathSphere(glm::vec3(-1.0f, 0.0f, -2.0f), 1.0f, Material(glm::vec3(0.0f, 0.0f, 1.0f), 0.05f, 0.0f, glm::vec3(10.0f))),
+        MathSphere(glm::vec3(0.0f, -51.0f, 0.0f), 50.0f, Material(glm::vec3(1.0), 1.0f, 0.0f, glm::vec3(0.0f)))
     };
     
     Model bunny = Model("Models/Bunny/Bunny2.fbx");

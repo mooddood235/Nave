@@ -24,6 +24,8 @@ struct HitInfo{
 
 	float roughness;
 	float metalness;
+
+	vec3 emission;
 };
 
 struct Vertex{
@@ -50,13 +52,19 @@ struct MathSphere{
 	vec3 albedo;
 	float roughness;
 	float metalness;
+	vec3 emission;
 };
-
+struct Material{
+	vec3 albedo;
+	vec3 emission;
+	float roughness;
+	float metalness;
+};
 
 
 // Constants
 const float PI = 3.14159265359;
-const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0), vec3(0), 0, 0);
+const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0), vec3(0), 0, 0, vec3(0));
 const uint MAXVERTEXCOUNT = 1000;
 
 // Helper functions
@@ -111,6 +119,10 @@ layout (std140) buffer Indices{
 layout (std140) buffer BVH{
 	BVHNode bvh[];
 };
+layout (std140) buffer Materials{
+	Material materials[];
+};
+
 uniform uint indexCount;
 uniform uint nodeCount;
 
@@ -122,9 +134,9 @@ void main(){
 	camera.xAxis * float(camera.viewPortWidth) / 2.0 * uv.x +
 	camera.yAxis * float(camera.viewPortHeight) / 2.0 * uv.y;
 
-	vec3 radiance = vec3(1.0);
-
 	Ray ray = Ray(camera.position, normalize(worldUV - camera.position));
+
+	vec3 radiance = vec3(1.0);
 
 	BVHNode stack[50];
 
@@ -175,9 +187,14 @@ void main(){
 		if (closestHit.didHit){
 			vec3 wi;
 
+			if (closestHit.emission != vec3(0)) {
+				radiance *= closestHit.emission;
+				break;
+			}
+
 			radiance *= ComputeRadianceGGX(ray.direction, closestHit, wi);
 	
-			ray.origin = closestHit.position + closestHit.normal * 0.001;
+			ray.origin = closestHit.position + closestHit.normal * 0.0001;
 			ray.direction = wi;
 		}
 		else{
@@ -215,7 +232,7 @@ HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
 		if (t < 0) return NoHit;
 		
 		vec3 hitPos = At(ray, t);
-		return HitInfo(true, t, hitPos, normalize(hitPos - mathSphere.position), mathSphere.albedo, mathSphere.roughness, mathSphere.metalness);
+		return HitInfo(true, t, hitPos, normalize(hitPos - mathSphere.position), mathSphere.albedo, mathSphere.roughness, mathSphere.metalness, mathSphere.emission);
 	}
 };
 HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray){
@@ -245,7 +262,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray){
     if (t > EPSILON) // ray intersection
     {
 		float w = 1.0 - u - v;
-        return HitInfo(true, t, At(ray, t), normalize(v0.normal * w + v1.normal * u + v2.normal * v), vec3(1, 0, 0), 0.0, 0.0);
+        return HitInfo(true, t, At(ray, t), normalize(v0.normal * w + v1.normal * u + v2.normal * v), vec3(0, 0.8, 0.7), 0.0, 0.0, vec3(0));
     }
     else // This means that there is a line intersection but not a ray intersection.
         return NoHit;
@@ -259,7 +276,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray){
     tmin = max( tmin, min( ty1, ty2 ) ), tmax = min( tmax, max( ty1, ty2 ) );
     float tz1 = (cornerMin.z - ray.origin.z) / ray.direction.z, tz2 = (cornerMax.z - ray.origin.z) / ray.direction.z;
     tmin = max( tmin, min( tz1, tz2 ) ), tmax = min( tmax, max( tz1, tz2 ) );
-    if (tmax >= tmin && tmin >= 0){
+    if (tmax >= tmin && tmax > 0){
 		HitInfo hitInfo;
 		hitInfo.didHit = true;
 		hitInfo.t = tmin;
