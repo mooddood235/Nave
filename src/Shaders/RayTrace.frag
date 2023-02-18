@@ -34,6 +34,12 @@ struct Vertex{
 	float pad0;
 	vec3 normal;
 	float pad1;
+	vec3 tangent;
+	float pad2;
+	vec3 biTangent;
+	float pad3;
+	vec2 uv;
+	uint64_t pad4;
 };
 struct BVHNode{
 	uint isLeaf;
@@ -55,14 +61,13 @@ struct MathSphere{
 	float metalness;
 	vec3 emission;
 };
-struct Material{
-	vec3 albedo;
-	vec3 emission;
-	float roughness;
-	float metalness;
-};
+
 struct TextureMaterial{
-	uint64_t diffuseTexture;
+	uint64_t albedoTexture;
+	uint64_t roughnessTexture;
+	uint64_t metalnessTexture;
+	uint64_t emissionTexture;
+	uint64_t normalTexture;
 	uint64_t pad0;
 };
 
@@ -91,7 +96,6 @@ vec3 ImportanceSampleGGX(vec3 n, float a);
 vec3 ImportanceSampleGGXVNDF(vec3 N, vec3 V, float alpha);
 
 // Intersection functions
-HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
 HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMaterialIndex);
 HitInfo Hit_AABB(vec3 cornerMin, vec3 cornerMax, Ray ray);
 
@@ -215,23 +219,6 @@ vec3 SampleEnvironmentMap(vec3 direction)
     
 	return texture(environmentMap, uv).rgb;
 };
-HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
-	vec3 oc = ray.origin - mathSphere.position;
-    float a = dot(ray.direction, ray.direction);
-    float b = 2.0 * dot(oc, ray.direction);
-    float c = dot(oc, oc) - mathSphere.radius*mathSphere.radius;
-    float discriminant = b*b - 4*a*c;
-
-    if (discriminant < 0) return NoHit;
-	else {
-		float t = (-b - sqrt(discriminant) ) / (2.0*a);
-
-		if (t < 0) return NoHit;
-		
-		vec3 hitPos = At(ray, t);
-		return HitInfo(true, t, hitPos, normalize(hitPos - mathSphere.position), mathSphere.albedo, mathSphere.roughness, mathSphere.metalness, mathSphere.emission);
-	}
-};
 HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMaterialIndex){
 	const float EPSILON = 0.0000001;
     vec3 vertex0 = v0.position;
@@ -259,9 +246,23 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
     if (t > EPSILON) // ray intersection
     {
 		float w = 1.0 - u - v;
-		vec3 albedo = texture(sampler2D(textureMaterials[textureMaterialIndex].diffuseTexture), vec2(u, v)).rgb;
 
-        return HitInfo(true, t, At(ray, t), normalize(v0.normal * w + v1.normal * u + v2.normal * v), albedo, 1.0, 0.0, vec3(0));
+		vec2 uv = v0.uv * w + v1.uv * u + v2.uv * v;
+
+		mat3 TBN = transpose(mat3(
+			normalize(v0.tangent * w + v1.tangent * u + v2.tangent * v),
+			normalize(v0.biTangent * w + v1.biTangent * u + v2.biTangent * v),
+			normalize(v0.normal * w + v1.normal * u + v2.normal * v))
+		);
+
+		vec3 albedo = texture(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv).rgb;
+		float roughness = texture(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv).r;
+		float metalness = texture(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv).r;
+		vec3 emission = texture(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv).rgb;
+		vec3 normal = texture(sampler2D(textureMaterials[textureMaterialIndex].normalTexture), uv).rgb * 2.0 - 1.0;
+		normal = normalize(inverse(TBN) * normal);
+
+        return HitInfo(true, t, At(ray, t), normal, albedo, roughness, metalness, emission);
     }
     else // This means that there is a line intersection but not a ray intersection.
         return NoHit;

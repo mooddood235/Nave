@@ -28,6 +28,9 @@ BVH::BVH(std::vector<Model> models) {
 			for (unsigned int k = 0; k < meshVertices.size(); k++) {
 				meshVertices[k].pos = model.GetModelMatrix() * glm::vec4(meshVertices[k].pos, 1);
 				meshVertices[k].normal = model.GetNormalMatrix() * meshVertices[k].normal;
+				meshVertices[k].tangent = model.GetNormalMatrix() * meshVertices[k].tangent;
+				meshVertices[k].biTangent = model.GetNormalMatrix() * meshVertices[k].biTangent;
+
 				vertices.push_back(meshVertices[k]);
 			}
 
@@ -63,11 +66,14 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 	glGenBuffers(1, &textureMaterialsSSBO);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, verticesSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 32 * vertices.size(), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 80 * vertices.size(), NULL, GL_STATIC_DRAW);
 
 	for (unsigned int i = 0; i < vertices.size(); i++) {
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 32, 12, &(vertices[i].pos));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 32 + 16, 12, &(vertices[i].normal));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 80, 12, &(vertices[i].pos));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 80 + 16, 12, &(vertices[i].normal));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 80 + 16 * 2, 12, &(vertices[i].tangent));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 80 + 16 * 3, 12, &(vertices[i].biTangent));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 80 + 16 * 4, 8, &(vertices[i].uv));
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, indicesSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, 16 * indices.size(), NULL, GL_STATIC_DRAW);
@@ -79,8 +85,6 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 	glBufferData(GL_SHADER_STORAGE_BUFFER, nodes.size() * 48, NULL, GL_STATIC_DRAW);
 
 	for (unsigned int i = 0; i < nodes.size(); i++) {
-		//std::cout << nodes[i].isLeaf << " " << nodes[i].left << " " << nodes[i].right << std::endl;
-
 		unsigned int isLeaf = unsigned int(nodes[i].isLeaf);
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48, 4, &isLeaf);
 
@@ -91,15 +95,23 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 16 * 2, 12, &(nodes[i].aabb.cornerMax));
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, textureMaterialsSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, textureMaterials.size() * 16, NULL, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, textureMaterials.size() * 48, NULL, GL_STATIC_DRAW);
 
 	for (unsigned int i = 0; i < textureMaterials.size(); i++) {
 		TextureMaterial textureMaterial = textureMaterials[i];
 
-		uint64_t diffuseTextureHandle = glGetTextureHandleARB(textureMaterial.diffuseTexture.id);
-		textureHandles.push_back(diffuseTextureHandle);
+		uint64_t handles[] = {
+			glGetTextureHandleARB(textureMaterial.albedoTexture.id),
+			glGetTextureHandleARB(textureMaterial.roughnessTexture.id),
+			glGetTextureHandleARB(textureMaterial.metalnessTexture.id),
+			glGetTextureHandleARB(textureMaterial.emissionTexture.id),
+			glGetTextureHandleARB(textureMaterial.normalsTexture.id)
+		};
 
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 16, 8, &diffuseTextureHandle);
+		for (unsigned int j = 0; j < 5; j++) {
+			if (std::find(textureHandles.begin(), textureHandles.end(), handles[j]) == textureHandles.end()) textureHandles.push_back(handles[j]);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 8 * j, 8, handles + j);
+		}
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
@@ -171,5 +183,8 @@ BVH BVH::DefaultBVH() {
 
 	Model cube = Model("Models/Cube/Cube.fbx");
 
-	return BVH({ bunny, cube });
+	Model camera = Model("Models/Camera/Camera.fbx");
+	camera.Rotate(-90, glm::vec3(1, 0, 0));
+	camera.Scale(glm::vec3(15));
+	return BVH({ camera });
 }

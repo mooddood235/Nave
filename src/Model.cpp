@@ -7,11 +7,12 @@
 
 #include "Vertex.h"
 #include "TextureMaterial.h"
+#include <stb_image/stb_image.h>
 
 Model::Model(std::string modelPath) {
 	modelDirectory = modelPath.substr(0, modelPath.find_last_of('/'));
 
-	const unsigned int flags = aiProcess_Triangulate | aiProcess_CalcTangentSpace;
+	const unsigned int flags = aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_FlipUVs;
 
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(modelPath, flags);
@@ -44,7 +45,22 @@ Mesh Model::aiMeshToMesh(aiMesh* mesh, const aiScene* scene) {
 	TextureMaterial textureMaterial;
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-		Vertex vertex = Vertex(aiVector3DToGLMVec3(mesh->mVertices[i]), aiVector3DToGLMVec3(mesh->mNormals[i]));
+		glm::vec2 uv = glm::vec2(0.0f);
+		glm::vec3 tangent = glm::vec3(0.0f);
+		glm::vec3 biTangent = glm::vec3(0.0f);
+
+		if (mesh->mTextureCoords[0]) {
+			uv = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+			tangent = aiVector3DToGLMVec3(mesh->mTangents[i]);
+			biTangent = aiVector3DToGLMVec3(mesh->mBitangents[i]);
+		}
+
+		Vertex vertex = Vertex(
+			aiVector3DToGLMVec3(mesh->mVertices[i]),
+			aiVector3DToGLMVec3(mesh->mNormals[i]),
+			tangent,
+			biTangent,
+			uv);
 		vertices.push_back(vertex);
 	}
 	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
@@ -56,12 +72,22 @@ Mesh Model::aiMeshToMesh(aiMesh* mesh, const aiScene* scene) {
 	}
 	if (mesh->mMaterialIndex >= 0) {
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-		textureMaterial.diffuseTexture = LoadTexture(material, aiTextureType_DIFFUSE);
+		textureMaterial.albedoTexture = LoadTexture(material, aiTextureType_DIFFUSE);
+		textureMaterial.roughnessTexture = LoadTexture(material, aiTextureType_SHININESS);
+		textureMaterial.metalnessTexture = LoadTexture(material, aiTextureType_METALNESS);
+		textureMaterial.emissionTexture = LoadTexture(material, aiTextureType_EMISSION_COLOR);
+		textureMaterial.normalsTexture = LoadTexture(material, aiTextureType_NORMALS);
 	}
 	return Mesh(vertices, indices, textureMaterial);
 }
 Texture Model::LoadTexture(aiMaterial* material, aiTextureType type) {
-	if (material->GetTextureCount(type) == 0) return Texture("src/Textures/DefaultTexture.png", aiTextureType_DIFFUSE);
+	if (material->GetTextureCount(type) == 0) {
+		if (type == aiTextureType_DIFFUSE) return Texture("src/Textures/DefaultAlbedo.png", aiTextureType_DIFFUSE);
+		else if (type == aiTextureType_SHININESS) return Texture("src/Textures/DefaultRoughness.png", aiTextureType_SHININESS);
+		else if (type == aiTextureType_METALNESS) return Texture("src/Textures/DefaultMetalness.png", aiTextureType_METALNESS);
+		else if (type == aiTextureType_NORMALS) return Texture("src/Textures/DefaultNormals.png", aiTextureType_NORMALS);
+		else return Texture("src/Textures/DefaultEmission.png", aiTextureType_EMISSION_COLOR);
+	}
 
 	aiString fileName;
 	material->GetTexture(type, 0, &fileName);

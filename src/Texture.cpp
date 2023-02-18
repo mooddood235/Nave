@@ -5,7 +5,7 @@
 
 Texture::Texture() {
 	this->id = 0;
-	this->path = "default/texture";
+	this->path = "openglDefaultTexture";
 }
 
 Texture::Texture(unsigned int id, std::string path) {

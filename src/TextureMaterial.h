@@ -2,9 +2,13 @@
 #include "Texture.h"
 
 struct TextureMaterial{
-	Texture diffuseTexture;
+	Texture albedoTexture;
+	Texture roughnessTexture;
+	Texture metalnessTexture;
+	Texture emissionTexture;
+	Texture normalsTexture;
 
 	TextureMaterial();
-	TextureMaterial(Texture diffuseTexture);
+	TextureMaterial(Texture diffuseTexture, Texture roughnessTexture, Texture metalnessTexture, Texture emissionTexture, Texture normalsTexture);
 };
 

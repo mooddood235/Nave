@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <random>
+#include <stb_image/stb_image.h>
 
 #include "WindowInfo.h"
 #include "ShaderProgram.h"
@@ -79,7 +80,7 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
+    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Park.hdr");
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
@@ -97,7 +98,7 @@ int main()
     rayTraceShader.SetUnsignedInt("camera.viewPortWidth", WINDOWWIDTH);
     rayTraceShader.SetUnsignedInt("camera.viewPortHeight", WINDOWHEIGHT);
 
-    rayTraceShader.SetUnsignedInt("maxDepth", 25);
+    rayTraceShader.SetUnsignedInt("maxDepth", 10);
     
     std::random_device rand_device;
     std::mt19937 generator(rand_device());
