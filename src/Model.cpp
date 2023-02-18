@@ -45,7 +45,7 @@ Mesh Model::aiMeshToMesh(aiMesh* mesh, const aiScene* scene) {
 	TextureMaterial textureMaterial;
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-		glm::vec2 uv = glm::vec2(0.0f);
+		/*glm::vec2 uv = glm::vec2(0.0f);
 		glm::vec3 tangent = glm::vec3(0.0f);
 		glm::vec3 biTangent = glm::vec3(0.0f);
 
@@ -53,14 +53,19 @@ Mesh Model::aiMeshToMesh(aiMesh* mesh, const aiScene* scene) {
 			uv = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
 			tangent = aiVector3DToGLMVec3(mesh->mTangents[i]);
 			biTangent = aiVector3DToGLMVec3(mesh->mBitangents[i]);
+		}*/
+
+		if (!mesh->mTextureCoords[0]) {
+			std::cout << "ERROR: A model with no UVs has been imported." << std::endl;
+			exit(-1);
 		}
 
 		Vertex vertex = Vertex(
 			aiVector3DToGLMVec3(mesh->mVertices[i]),
 			aiVector3DToGLMVec3(mesh->mNormals[i]),
-			tangent,
-			biTangent,
-			uv);
+			aiVector3DToGLMVec3(mesh->mTangents[i]),
+			aiVector3DToGLMVec3(mesh->mBitangents[i]),
+			glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y));
 		vertices.push_back(vertex);
 	}
 	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {

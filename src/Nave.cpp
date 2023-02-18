@@ -80,7 +80,7 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Park.hdr");
+    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
@@ -185,10 +185,10 @@ void InitGLFW() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
 
-    WINDOWWIDTH = videoMode->width;
-    WINDOWHEIGHT = videoMode->height;
+    WINDOWWIDTH = videoMode->width / 1.1;
+    WINDOWHEIGHT = videoMode->height / 1.1;
 
-    window = glfwCreateWindow(WINDOWWIDTH , WINDOWHEIGHT, "Nave", monitor, NULL);
+    window = glfwCreateWindow(WINDOWWIDTH , WINDOWHEIGHT, "Nave", NULL, NULL);
 
     if (!window) {
         std::cout << "ERROR: Failed to create GLFW window" << std::endl;

@@ -27,9 +27,9 @@ BVH::BVH(std::vector<Model> models) {
 
 			for (unsigned int k = 0; k < meshVertices.size(); k++) {
 				meshVertices[k].pos = model.GetModelMatrix() * glm::vec4(meshVertices[k].pos, 1);
-				meshVertices[k].normal = model.GetNormalMatrix() * meshVertices[k].normal;
-				meshVertices[k].tangent = model.GetNormalMatrix() * meshVertices[k].tangent;
-				meshVertices[k].biTangent = model.GetNormalMatrix() * meshVertices[k].biTangent;
+				meshVertices[k].normal = glm::normalize(model.GetNormalMatrix() * meshVertices[k].normal);
+				meshVertices[k].tangent = glm::normalize(model.GetNormalMatrix() * meshVertices[k].tangent);
+				meshVertices[k].biTangent = glm::normalize(model.GetNormalMatrix() * meshVertices[k].biTangent);
 
 				vertices.push_back(meshVertices[k]);
 			}
@@ -178,13 +178,13 @@ bool BVH::ComparatorZ(BVHNode node0, BVHNode node1) {
 
 
 BVH BVH::DefaultBVH() {
-	Model bunny = Model("Models/Bunny/Bunny2.fbx");
-	bunny.Scale(glm::vec3(15.0f));
-
-	Model cube = Model("Models/Cube/Cube.fbx");
+	Model quad = Model("Models/Quad/Quad.fbx");
+	quad.Rotate(-90, glm::vec3(1, 0, 0));
+	quad.Scale(glm::vec3(100), Space::local);
 
 	Model camera = Model("Models/Camera/Camera.fbx");
 	camera.Rotate(-90, glm::vec3(1, 0, 0));
+	camera.Rotate(180, glm::vec3(0, 1, 0));
 	camera.Scale(glm::vec3(15));
-	return BVH({ camera });
+	return BVH({ camera, quad });
 }
