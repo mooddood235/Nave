@@ -84,8 +84,8 @@ int main()
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
-    camera.Translate(glm::vec3(0, 0, 5));
-
+    camera.Translate(glm::vec3(0, 1.5, 5));
+    camera.Rotate(-15, glm::vec3(1, 0, 0), Space::local);
     // Load BVH
     BVH bvh = BVH::DefaultBVH();
     bvh.SetSSBOs(rayTraceShader);
@@ -185,8 +185,8 @@ void InitGLFW() {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
 
-    WINDOWWIDTH = videoMode->width / 1.1;
-    WINDOWHEIGHT = videoMode->height / 1.1;
+    WINDOWWIDTH = videoMode->width / 1.2;
+    WINDOWHEIGHT = videoMode->height / 1.2;
 
     window = glfwCreateWindow(WINDOWWIDTH , WINDOWHEIGHT, "Nave", NULL, NULL);
 
