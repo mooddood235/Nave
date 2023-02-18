@@ -1,4 +1,5 @@
 #version 460 core
+#extension ARB_gpu_shader_int64: enable
 
 struct Camera{
 	vec3 position;
@@ -60,6 +61,10 @@ struct Material{
 	float roughness;
 	float metalness;
 };
+struct TextureMaterial{
+	uint64_t diffuseTexture;
+	uint64_t pad0;
+};
 
 
 // Constants
@@ -87,7 +92,7 @@ vec3 ImportanceSampleGGXVNDF(vec3 N, vec3 V, float alpha);
 
 // Intersection functions
 HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray);
-HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray);
+HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMaterialIndex);
 HitInfo Hit_AABB(vec3 cornerMin, vec3 cornerMax, Ray ray);
 
 in vec2 uv;
@@ -107,9 +112,6 @@ uniform sampler2D environmentMap;
 uniform Camera camera;
 uniform uint maxDepth;
 
-uniform MathSphere mathSpheres[10];
-uniform uint mathSphereCount;
-
 layout (std140) buffer Vertices{
 	Vertex vertices[];
 };
@@ -119,8 +121,8 @@ layout (std140) buffer Indices{
 layout (std140) buffer BVH{
 	BVHNode bvh[];
 };
-layout (std140) buffer Materials{
-	Material materials[];
+layout (std140) buffer TextureMaterials{
+	TextureMaterial textureMaterials[];
 };
 
 uniform uint indexCount;
@@ -146,11 +148,6 @@ void main(){
 			break;
 		}
 		HitInfo closestHit = NoHit;
-
-		for (uint i = 0; i < mathSphereCount; i++){
-			HitInfo hitInfo = Hit_MathSphere(mathSpheres[i], ray);
-			if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
-		}
 
 		uint stackSize = 1;
 		stack[0] = bvh[0];
@@ -180,7 +177,7 @@ void main(){
 				Vertex v1 = vertices[indices[node.left + 1]];
 				Vertex v2 = vertices[indices[node.left + 2]];
 
-				HitInfo hitInfo = Hit_Triangle(v0, v1, v2, ray);
+				HitInfo hitInfo = Hit_Triangle(v0, v1, v2, ray, node.right);
 				if (hitInfo.didHit && hitInfo.t < closestHit.t) closestHit = hitInfo;
 			}
 		}
@@ -235,7 +232,7 @@ HitInfo Hit_MathSphere(MathSphere mathSphere, Ray ray){
 		return HitInfo(true, t, hitPos, normalize(hitPos - mathSphere.position), mathSphere.albedo, mathSphere.roughness, mathSphere.metalness, mathSphere.emission);
 	}
 };
-HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray){
+HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMaterialIndex){
 	const float EPSILON = 0.0000001;
     vec3 vertex0 = v0.position;
     vec3 vertex1 = v1.position;  
@@ -262,7 +259,9 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray){
     if (t > EPSILON) // ray intersection
     {
 		float w = 1.0 - u - v;
-        return HitInfo(true, t, At(ray, t), normalize(v0.normal * w + v1.normal * u + v2.normal * v), vec3(0, 0.8, 0.7), 0.0, 0.0, vec3(0));
+		vec3 albedo = texture(sampler2D(textureMaterials[textureMaterialIndex].diffuseTexture), vec2(u, v)).rgb;
+
+        return HitInfo(true, t, At(ray, t), normalize(v0.normal * w + v1.normal * u + v2.normal * v), albedo, 1.0, 0.0, vec3(0));
     }
     else // This means that there is a line intersection but not a ray intersection.
         return NoHit;

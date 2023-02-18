@@ -12,6 +12,7 @@ public:
 	void Scale(glm::vec3 scale, Space space = Space::global);
 	void Rotate(float angleInDegrees, glm::vec3 axis, Space space = Space::global);
 	glm::mat4 GetModelMatrix();
+	glm::mat3 GetNormalMatrix();
 	glm::vec3 GetPosition();
 	glm::vec3 GetScale();
 	glm::vec3 GetXAxis();

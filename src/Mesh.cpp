@@ -2,9 +2,10 @@
 #include <glad/glad.h>
 #include <iostream>
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) {
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, TextureMaterial textureMaterial) {
 	this->vertices = vertices;
 	this->indices = indices;
+	this->textureMaterial = textureMaterial;
 	GenerateMesh();
 }
 void Mesh::Draw() {
@@ -39,4 +40,7 @@ std::vector<Vertex> Mesh::GetVertices() {
 }
 std::vector<unsigned int> Mesh::GetIndices() {
 	return indices;
+}
+TextureMaterial Mesh::GetTextureMaterial() {
+	return textureMaterial;
 }

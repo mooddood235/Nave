@@ -18,6 +18,9 @@ void GameObject::Rotate(float angleInDegrees, glm::vec3 axis, Space space) {
 glm::mat4 GameObject::GetModelMatrix() {
 	return translationMatrix * scaleMatrix * rotationMatrix;
 }
+glm::mat3 GameObject::GetNormalMatrix() {
+	return glm::mat3(glm::transpose(glm::inverse(GetModelMatrix())));
+}
 glm::vec3 GameObject::GetPosition() {
 	return position;
 }

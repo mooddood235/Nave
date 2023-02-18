@@ -148,10 +148,8 @@
     <ClCompile Include="src\AABB.cpp" />
     <ClCompile Include="src\BVHNode.cpp" />
     <ClCompile Include="src\BVH.cpp" />
-    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\SceneData.cpp" />
     <ClCompile Include="src\Material.cpp" />
-    <ClCompile Include="Scenes\DefaultScene.cpp" />
     <ClCompile Include="src\EnvironmentMap.cpp" />
     <ClCompile Include="src\MathSphere.cpp" />
     <ClCompile Include="src\Camera.cpp" />
@@ -163,6 +161,8 @@
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\stb_image.cpp" />
     <ClCompile Include="src\Vertex.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\TextureMaterial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AABB.h" />
@@ -170,8 +170,6 @@
     <ClInclude Include="src\BVH.h" />
     <ClInclude Include="src\SceneData.h" />
     <ClInclude Include="src\Material.h" />
-    <ClInclude Include="Scenes\DefaultScene.h" />
-    <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\EnvironmentMap.h" />
     <ClInclude Include="src\MathSphere.h" />
     <ClInclude Include="src\Camera.h" />
@@ -181,6 +179,8 @@
     <ClInclude Include="src\ShaderProgram.h" />
     <ClInclude Include="src\Vertex.h" />
     <ClInclude Include="src\WindowInfo.h" />
+    <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\TextureMaterial.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Shaders\PostProcess.frag" />
