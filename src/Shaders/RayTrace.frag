@@ -69,6 +69,14 @@ struct TextureMaterial{
 	uint64_t emissionTexture;
 	uint64_t normalTexture;
 	uint64_t pad0;
+
+	vec3 albedo;
+	float pad1;
+	float roughness;
+	float metalness;
+	uint64_t pad2;
+	vec3 emission;
+	float pad3;
 };
 
 
@@ -255,10 +263,15 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
 			normalize(v0.normal * w + v1.normal * u + v2.normal * v))
 		);
 
-		vec3 albedo = texture(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv).rgb;
-		float roughness = texture(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv).r;
-		float metalness = texture(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv).r;
-		vec3 emission = texture(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv).rgb;
+		vec3 albedoProperty = textureMaterials[textureMaterialIndex].albedo;
+		float roughnessProperty = textureMaterials[textureMaterialIndex].roughness;
+		float metalnessProperty = textureMaterials[textureMaterialIndex].metalness;
+		vec3 emissionProperty = textureMaterials[textureMaterialIndex].emission;
+
+		vec3 albedo = albedoProperty.r < 0.0 ? texture(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv).rgb : albedoProperty;
+		float roughness = roughnessProperty < 0.0 ? texture(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv).r : roughnessProperty;
+		float metalness = metalnessProperty < 0.0 ? texture(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv).r : metalnessProperty;
+		vec3 emission = emissionProperty.r < 0.0 ? texture(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv).rgb : emissionProperty;
 		vec3 normal = texture(sampler2D(textureMaterials[textureMaterialIndex].normalTexture), uv).rgb * 2.0 - 1.0;
 		normal = normalize(inverse(TBN) * normal);
 

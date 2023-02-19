@@ -20,6 +20,7 @@ private:
 	void GetMeshes(aiNode* node, const aiScene* scene);
 	Mesh aiMeshToMesh(aiMesh* mesh, const aiScene* scene);
 	glm::vec3 aiVector3DToGLMVec3(aiVector3D vector);
+	glm::vec3 aiColor3DToGLMVec3(aiColor3D color);
 	Texture LoadTexture(aiMaterial* material, aiTextureType type);
 };
 

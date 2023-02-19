@@ -95,7 +95,7 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 16 * 2, 12, &(nodes[i].aabb.cornerMax));
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, textureMaterialsSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, textureMaterials.size() * 48, NULL, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, textureMaterials.size() * 96, NULL, GL_STATIC_DRAW);
 
 	for (unsigned int i = 0; i < textureMaterials.size(); i++) {
 		TextureMaterial textureMaterial = textureMaterials[i];
@@ -110,8 +110,12 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 
 		for (unsigned int j = 0; j < 5; j++) {
 			if (std::find(textureHandles.begin(), textureHandles.end(), handles[j]) == textureHandles.end()) textureHandles.push_back(handles[j]);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 8 * j, 8, handles + j);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 96 + 8 * j, 8, handles + j);
 		}
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 96 + 16 * 3, 12, &textureMaterial.albedo);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 96 + 16 * 4, 4, &textureMaterial.roughness);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 96 + 16 * 4 + 4, 4, &textureMaterial.metalness);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 96 + 16 * 5, 12, &textureMaterial.emission);
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
@@ -187,4 +191,11 @@ BVH BVH::DefaultBVH() {
 	camera.Rotate(180, glm::vec3(0, 1, 0));
 	camera.Scale(glm::vec3(15));
 	return BVH({ camera, quad });
+}
+BVH BVH::TestBVH() {
+	Model torus = Model("Models/Torus/Torus.fbx");
+	torus.Translate(glm::vec3(0, -2, -5));
+	torus.Scale(glm::vec3(2.0f));
+	torus.Rotate(90, glm::vec3(1, 0, 0));
+	return BVH({ torus });
 }

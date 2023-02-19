@@ -16,6 +16,8 @@ public:
 
 	// Preset BVHs
 	static BVH DefaultBVH();
+	static BVH TestBVH();
+
 private:
 	unsigned int verticesSSBO;
 	unsigned int indicesSSBO;

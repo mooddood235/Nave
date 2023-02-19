@@ -82,16 +82,28 @@ Mesh Model::aiMeshToMesh(aiMesh* mesh, const aiScene* scene) {
 		textureMaterial.metalnessTexture = LoadTexture(material, aiTextureType_METALNESS);
 		textureMaterial.emissionTexture = LoadTexture(material, aiTextureType_EMISSION_COLOR);
 		textureMaterial.normalsTexture = LoadTexture(material, aiTextureType_NORMALS);
+
+		aiColor3D albedo = aiColor3D(-1.0f, -1.0f, -1.0f);
+		aiColor3D emission = aiColor3D(-1.0, -1.0, -1.0f);
+		float roughness = -1.0f;
+		float metalness = -1.0f;
+
+		if (textureMaterial.albedoTexture.path.compare("src/Textures/DefaultTexture.png") == 0)	material->Get(AI_MATKEY_COLOR_DIFFUSE, albedo);
+		if (textureMaterial.emissionTexture.path.compare("src/Textures/DefaultTexture.png") == 0) material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
+		if (textureMaterial.roughnessTexture.path.compare("src/Textures/DefaultTexture.png") == 0) material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness);
+		if (textureMaterial.roughnessTexture.path.compare("src/Textures/DefaultTexture.png") == 0) material->Get(AI_MATKEY_REFLECTIVITY, metalness);
+
+		textureMaterial.albedo = aiColor3DToGLMVec3(albedo);
+		textureMaterial.emission = aiColor3DToGLMVec3(emission);
+		textureMaterial.roughness = roughness;
+		textureMaterial.metalness = metalness;
 	}
 	return Mesh(vertices, indices, textureMaterial);
 }
 Texture Model::LoadTexture(aiMaterial* material, aiTextureType type) {
 	if (material->GetTextureCount(type) == 0) {
-		if (type == aiTextureType_DIFFUSE) return Texture("src/Textures/DefaultAlbedo.png", aiTextureType_DIFFUSE);
-		else if (type == aiTextureType_SHININESS) return Texture("src/Textures/DefaultRoughness.png", aiTextureType_SHININESS);
-		else if (type == aiTextureType_METALNESS) return Texture("src/Textures/DefaultMetalness.png", aiTextureType_METALNESS);
-		else if (type == aiTextureType_NORMALS) return Texture("src/Textures/DefaultNormals.png", aiTextureType_NORMALS);
-		else return Texture("src/Textures/DefaultEmission.png", aiTextureType_EMISSION_COLOR);
+		if (type == aiTextureType_NORMALS) return Texture("src/Textures/DefaultNormals.png", type);
+		return Texture("src/Textures/DefaultTexture.png", type);
 	}
 
 	aiString fileName;
@@ -112,6 +124,9 @@ Texture Model::LoadTexture(aiMaterial* material, aiTextureType type) {
 }
 glm::vec3 Model::aiVector3DToGLMVec3(aiVector3D vector) {
 	return glm::vec3(vector.x, vector.y, vector.z);
+}
+glm::vec3 Model::aiColor3DToGLMVec3(aiColor3D color) {
+	return glm::vec3(color.r, color.g, color.b);
 }
 std::vector<Mesh> Model::GetMeshes() {
 	return meshes;
