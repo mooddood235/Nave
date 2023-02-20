@@ -190,7 +190,7 @@ BVH BVH::DefaultBVH() {
 	camera.Scale(glm::vec3(15));
 	return BVH({ camera, quad });
 }
-BVH BVH::TestBVH() {
+BVH BVH::CornellBVH() {
 	/*Model torus = Model("Models/Torus/Torus.fbx");
 	torus.Translate(glm::vec3(0, -2, -5));
 	torus.Scale(glm::vec3(2.0f));
@@ -200,4 +200,12 @@ BVH BVH::TestBVH() {
 	Model cornell = Model("Models/Cornell/Cornell.fbx");
 	cornell.Rotate(180, glm::vec3(1, 0, 0));
 	return BVH({ cornell });
+}
+BVH BVH::KitchenBVH() {
+	Model kitchen = Model("Models/Kitchen/Kitchen.fbx");
+	kitchen.Scale(glm::vec3(0.01));
+	kitchen.Translate(glm::vec3(0, 0, -20));
+	kitchen.Rotate(-90, glm::vec3(1, 0, 0));
+	kitchen.Rotate(25, glm::vec3(0, 1, 0));
+	return BVH({ kitchen });
 }

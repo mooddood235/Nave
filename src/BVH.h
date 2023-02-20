@@ -16,7 +16,8 @@ public:
 
 	// Preset BVHs
 	static BVH DefaultBVH();
-	static BVH TestBVH();
+	static BVH CornellBVH();
+	static BVH KitchenBVH();
 
 private:
 	unsigned int verticesSSBO;
