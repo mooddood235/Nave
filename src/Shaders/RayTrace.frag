@@ -418,7 +418,7 @@ vec3 ImportanceSampleGGXVNDF(vec3 n, vec3 v, float a)
 vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 	const float specChance = 0.5;
 
-	float a = clamp(hitInfo.roughness, 0.0, 1.0);
+	float a = clamp(hitInfo.roughness * hitInfo.roughness, 0.0, 1.0);
 
 	vec3 n = hitInfo.normal;
 	vec3 v = -wo;
