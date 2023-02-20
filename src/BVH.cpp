@@ -201,11 +201,9 @@ BVH BVH::CornellBVH() {
 	cornell.Rotate(180, glm::vec3(1, 0, 0));
 	return BVH({ cornell });
 }
-BVH BVH::KitchenBVH() {
-	Model kitchen = Model("Models/Kitchen/Kitchen.fbx");
-	kitchen.Scale(glm::vec3(0.01));
-	kitchen.Translate(glm::vec3(0, 0, -20));
-	kitchen.Rotate(-90, glm::vec3(1, 0, 0));
-	kitchen.Rotate(25, glm::vec3(0, 1, 0));
-	return BVH({ kitchen });
+BVH BVH::LanternBVH() {
+	Model lantern = Model("Models/Lantern/Lantern.fbx");
+	lantern.Rotate(-90, glm::vec3(1, 0, 0), Space::local);
+	//lantern.Scale(glm::vec3(8));
+	return BVH({ lantern });
 }
