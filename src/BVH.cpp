@@ -179,8 +179,6 @@ bool BVH::ComparatorY(BVHNode node0, BVHNode node1) {
 bool BVH::ComparatorZ(BVHNode node0, BVHNode node1) {
 	return node0.aabb.cornerMin.z <= node1.aabb.cornerMin.z;
 }
-
-
 BVH BVH::DefaultBVH() {
 	Model quad = Model("Models/Quad/Quad.fbx");
 	quad.Rotate(-90, glm::vec3(1, 0, 0));
@@ -193,9 +191,13 @@ BVH BVH::DefaultBVH() {
 	return BVH({ camera, quad });
 }
 BVH BVH::TestBVH() {
-	Model torus = Model("Models/Torus/Torus.fbx");
+	/*Model torus = Model("Models/Torus/Torus.fbx");
 	torus.Translate(glm::vec3(0, -2, -5));
 	torus.Scale(glm::vec3(2.0f));
 	torus.Rotate(90, glm::vec3(1, 0, 0));
-	return BVH({ torus });
+	return BVH({ torus });*/
+
+	Model cornell = Model("Models/Cornell/Cornell.fbx");
+	cornell.Rotate(180, glm::vec3(1, 0, 0));
+	return BVH({ cornell });
 }

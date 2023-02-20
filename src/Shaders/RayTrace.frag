@@ -251,7 +251,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
         return NoHit;
     // At this stage we can compute t to find out where the intersection point is on the line.
     float t = f * dot(edge2, q);
-    if (t > EPSILON) // ray intersection
+    if (t > EPSILON && dot(cross(edge1, edge2), ray.direction) < 0) // ray intersection
     {
 		float w = 1.0 - u - v;
 
@@ -277,8 +277,8 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
 
         return HitInfo(true, t, At(ray, t), normal, albedo, roughness, metalness, emission);
     }
-    else // This means that there is a line intersection but not a ray intersection.
-        return NoHit;
+    // This means that there is a line intersection but not a ray intersection.
+    return NoHit;
 }
     
 
@@ -292,7 +292,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
     if (tmax >= tmin && tmax > 0){
 		HitInfo hitInfo;
 		hitInfo.didHit = true;
-		hitInfo.t = tmin;
+		hitInfo.t = tmin < 0 ? 0 : tmin;
 		return hitInfo;
 	}
 	return NoHit;

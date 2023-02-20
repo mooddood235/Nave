@@ -45,16 +45,6 @@ Mesh Model::aiMeshToMesh(aiMesh* mesh, const aiScene* scene) {
 	TextureMaterial textureMaterial;
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-		/*glm::vec2 uv = glm::vec2(0.0f);
-		glm::vec3 tangent = glm::vec3(0.0f);
-		glm::vec3 biTangent = glm::vec3(0.0f);
-
-		if (mesh->mTextureCoords[0]) {
-			uv = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-			tangent = aiVector3DToGLMVec3(mesh->mTangents[i]);
-			biTangent = aiVector3DToGLMVec3(mesh->mBitangents[i]);
-		}*/
-
 		if (!mesh->mTextureCoords[0]) {
 			std::cout << "ERROR: A model with no UVs has been imported." << std::endl;
 			exit(-1);

@@ -80,14 +80,14 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
+    EnvironmentMap environmentMap = EnvironmentMap("src/Textures/DefaultTexture.png");
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
     camera.Translate(glm::vec3(0, 1.5, 5));
     camera.Rotate(-15, glm::vec3(1, 0, 0), Space::local);
     // Load BVH
-    BVH bvh = BVH::DefaultBVH();
+    BVH bvh = BVH::TestBVH();
     bvh.SetSSBOs(rayTraceShader);
     bvh.MakeHandlesResident();
 
@@ -98,7 +98,7 @@ int main()
     rayTraceShader.SetUnsignedInt("camera.viewPortWidth", WINDOWWIDTH);
     rayTraceShader.SetUnsignedInt("camera.viewPortHeight", WINDOWHEIGHT);
 
-    rayTraceShader.SetUnsignedInt("maxDepth", 10);
+    rayTraceShader.SetUnsignedInt("maxDepth", 15);
     
     std::random_device rand_device;
     std::mt19937 generator(rand_device());
