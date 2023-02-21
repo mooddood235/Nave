@@ -56,7 +56,7 @@ BVH::BVH(std::vector<Model> models) {
 	
 	indexCount = indices.size();
 	nodeCount = nodes.size();
-
+	std::cout << nodeCount << std::endl;
 	GenerateSSBOs(vertices, indices, nodes, textureMaterials);
 }
 void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<BVHNode> nodes, std::vector<TextureMaterial> textureMaterials) {
@@ -86,13 +86,12 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 
 	for (unsigned int i = 0; i < nodes.size(); i++) {
 		unsigned int isLeaf = unsigned int(nodes[i].isLeaf);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48, 4, &isLeaf);
 
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 4, 4, &(nodes[i].left));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 8, 4, &(nodes[i].right));
-
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 16, 12, &(nodes[i].aabb.cornerMin));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 16 * 2, 12, &(nodes[i].aabb.cornerMax));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48, 12, &(nodes[i].aabb.cornerMin));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 16, 12, &(nodes[i].aabb.cornerMax));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 2 * 16, 4, &(isLeaf));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 2 * 16 + 4, 4, &(nodes[i].left));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 2 * 16 + 8, 4, &(nodes[i].right));
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, textureMaterialsSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, textureMaterials.size() * 96, NULL, GL_STATIC_DRAW);
@@ -120,7 +119,11 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 unsigned int BVH::BuildBVH(std::vector<BVHNode>& nodes, BVHNode* leafNodes, unsigned int start, unsigned int end, AABB& AABBOut) {
-	if (start == end) {
+	if (start > end) {
+		std::cout << "ERROR: start more than end." << std::endl;
+		exit(-1);
+	}
+	else if (start == end) {
 		nodes.push_back(leafNodes[start]);
 		AABBOut = leafNodes[start].aabb;
 		return nodes.size() - 1;
@@ -130,15 +133,32 @@ unsigned int BVH::BuildBVH(std::vector<BVHNode>& nodes, BVHNode* leafNodes, unsi
 
 	bool (*comparators[])(BVHNode, BVHNode) { ComparatorX, ComparatorY, ComparatorZ };
 
-	std::sort(leafNodes + start, leafNodes + end, comparators[rand() % 3]);
+	unsigned int bestSplitIndex = 0;
+	unsigned int bestAxis = 0;
+	float bestCost = INFINITY;
+
+	for (unsigned int axis = 0; axis <= 2; axis++) {
+		std::sort(leafNodes + start, leafNodes + end, comparators[axis]);
+
+		for (unsigned int splitIndex = start; splitIndex <= end; splitIndex++) {
+			float splitCost = ComputeSplitCost(leafNodes, start, splitIndex, end);
+			
+			if (splitCost < bestCost) {
+				bestSplitIndex = splitIndex;
+				bestAxis = axis;
+				bestCost = splitCost;
+			}
+		}
+	}
+	std::sort(leafNodes + start, leafNodes + end, comparators[bestAxis]);
 
 	AABB leftAABB;
 	AABB rightAABB;
 	
 	unsigned int middle = start + (end - start) / 2;
 
-	unsigned int leftIndex = BuildBVH(nodes, leafNodes, start, middle, leftAABB);
-	unsigned int rightIndex = BuildBVH(nodes, leafNodes, middle + 1, end, rightAABB);
+	unsigned int leftIndex = BuildBVH(nodes, leafNodes, start, bestSplitIndex, leftAABB);
+	unsigned int rightIndex = BuildBVH(nodes, leafNodes, bestSplitIndex + 1, end, rightAABB);
 
 	AABBOut = AABB(leftAABB, rightAABB);
 
@@ -171,13 +191,29 @@ void BVH::MakeHandlesNotResident() {
 	}
 }
 bool BVH::ComparatorX(BVHNode node0, BVHNode node1) {
-	return node0.aabb.cornerMin.x <= node1.aabb.cornerMin.x;
+	return node0.aabb.GetCentroid().x <= node1.aabb.GetCentroid().x;
 }
 bool BVH::ComparatorY(BVHNode node0, BVHNode node1) {
-	return node0.aabb.cornerMin.y <= node1.aabb.cornerMin.y;
+	return node0.aabb.GetCentroid().y <= node1.aabb.GetCentroid().y;
 }
 bool BVH::ComparatorZ(BVHNode node0, BVHNode node1) {
-	return node0.aabb.cornerMin.z <= node1.aabb.cornerMin.z;
+	return node0.aabb.GetCentroid().z <= node1.aabb.GetCentroid().z;
+}
+float BVH::ComputeSplitCost(BVHNode* leafNodes, unsigned int start, unsigned int split, unsigned int end) {
+	const float tTraversal = 1.0f;
+	const float tIntersect = 2.0f;
+
+	float intersectionCost_A = (split - start + 1) * tIntersect, intersectionCost_B = (end - split) * tIntersect;
+
+	float S_T = 0, S_A = 0, S_B = 0;
+
+	for (unsigned int i = start; i <= split; i++) S_A += leafNodes[i].aabb.GetSurfaceArea();
+	for (unsigned int i = split + 1; i <= end; i++) S_B += leafNodes[i].aabb.GetSurfaceArea();
+	S_T = S_A + S_B;
+
+	float P_A = S_A / S_T, P_B = S_B / S_T;
+
+	return tTraversal + P_A * intersectionCost_A + P_B * intersectionCost_B;
 }
 BVH BVH::DefaultBVH() {
 	Model quad = Model("Models/Quad/Quad.fbx");
@@ -191,12 +227,6 @@ BVH BVH::DefaultBVH() {
 	return BVH({ camera, quad });
 }
 BVH BVH::CornellBVH() {
-	/*Model torus = Model("Models/Torus/Torus.fbx");
-	torus.Translate(glm::vec3(0, -2, -5));
-	torus.Scale(glm::vec3(2.0f));
-	torus.Rotate(90, glm::vec3(1, 0, 0));
-	return BVH({ torus });*/
-
 	Model cornell = Model("Models/Cornell/Cornell.fbx");
 	cornell.Rotate(180, glm::vec3(1, 0, 0));
 	return BVH({ cornell });

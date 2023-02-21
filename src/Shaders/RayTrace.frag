@@ -42,15 +42,16 @@ struct Vertex{
 	uint64_t pad4;
 };
 struct BVHNode{
+	vec3 cornerMin;
+	float pad0;
+	vec3 cornerMax;
+	float pad1;
+
 	uint isLeaf;
-	
 	uint left;
 	uint right;
 
-	float pad0;
-
-	vec3 cornerMin;
-	vec3 cornerMax;
+	float pad2;
 };
 
 struct MathSphere{
@@ -83,7 +84,6 @@ struct TextureMaterial{
 // Constants
 const float PI = 3.14159265359;
 const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0), vec3(0), 0, 0, vec3(0));
-const uint MAXVERTEXCOUNT = 1000;
 
 // Helper functions
 float Rand();
@@ -152,7 +152,7 @@ void main(){
 
 	vec3 radiance = vec3(1.0);
 
-	BVHNode stack[50];
+	BVHNode stack[25];
 
 	for (uint depth = 1; depth <= maxDepth + 1; depth++){
 		if (depth == maxDepth + 1){
@@ -251,34 +251,32 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
         return NoHit;
     // At this stage we can compute t to find out where the intersection point is on the line.
     float t = f * dot(edge2, q);
-    if (t > EPSILON && dot(cross(edge1, edge2), ray.direction) < 0) // ray intersection
-    {
-		float w = 1.0 - u - v;
 
-		vec2 uv = v0.uv * w + v1.uv * u + v2.uv * v;
+	if (a > -EPSILON && a < EPSILON || u < 0.0 || u > 1.0 || t <= EPSILON) return NoHit;
 
-		mat3 TBN = transpose(mat3(
-			normalize(v0.tangent * w + v1.tangent * u + v2.tangent * v),
-			normalize(v0.biTangent * w + v1.biTangent * u + v2.biTangent * v),
-			normalize(v0.normal * w + v1.normal * u + v2.normal * v))
-		);
+	float w = 1.0 - u - v;
 
-		vec3 albedoProperty = textureMaterials[textureMaterialIndex].albedo;
-		float roughnessProperty = textureMaterials[textureMaterialIndex].roughness;
-		float metalnessProperty = textureMaterials[textureMaterialIndex].metalness;
-		vec3 emissionProperty = textureMaterials[textureMaterialIndex].emission;
+	vec2 uv = v0.uv * w + v1.uv * u + v2.uv * v;
 
-		vec3 albedo = albedoProperty.r < 0.0 ? texture(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv).rgb : albedoProperty;
-		float roughness = roughnessProperty < 0.0 ? texture(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv).r : roughnessProperty;
-		float metalness = metalnessProperty < 0.0 ? texture(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv).r : metalnessProperty;
-		vec3 emission = emissionProperty.r < 0.0 ? texture(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv).rgb : emissionProperty;
-		vec3 normal = texture(sampler2D(textureMaterials[textureMaterialIndex].normalTexture), uv).rgb * 2.0 - 1.0;
-		normal = normalize(inverse(TBN) * normal);
+	mat3 TBN = transpose(mat3(
+		normalize(v0.tangent * w + v1.tangent * u + v2.tangent * v),
+		normalize(v0.biTangent * w + v1.biTangent * u + v2.biTangent * v),
+		normalize(v0.normal * w + v1.normal * u + v2.normal * v))
+	);
 
-        return HitInfo(true, t, At(ray, t), normal, albedo, roughness, metalness, emission);
-    }
-    // This means that there is a line intersection but not a ray intersection.
-    return NoHit;
+	vec3 albedoProperty = textureMaterials[textureMaterialIndex].albedo;
+	float roughnessProperty = textureMaterials[textureMaterialIndex].roughness;
+	float metalnessProperty = textureMaterials[textureMaterialIndex].metalness;
+	vec3 emissionProperty = textureMaterials[textureMaterialIndex].emission;
+
+	vec3 albedo = texture(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv).rgb + albedoProperty;
+	float roughness = texture(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv).r + roughnessProperty;
+	float metalness = texture(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv).r + metalnessProperty;
+	vec3 emission = texture(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv).rgb + emissionProperty;
+	vec3 normal = texture(sampler2D(textureMaterials[textureMaterialIndex].normalTexture), uv).rgb * 2.0 - 1.0;
+	normal = normalize(inverse(TBN) * normal);
+
+    return HitInfo(true, t, At(ray, t), normal, albedo, roughness, metalness, emission);
 }
     
 
@@ -292,7 +290,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
     if (tmax >= tmin && tmax > 0){
 		HitInfo hitInfo;
 		hitInfo.didHit = true;
-		hitInfo.t = tmin < 0 ? 0 : tmin;
+		hitInfo.t = tmin;
 		return hitInfo;
 	}
 	return NoHit;

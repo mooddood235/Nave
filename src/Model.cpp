@@ -73,10 +73,10 @@ Mesh Model::aiMeshToMesh(aiMesh* mesh, const aiScene* scene) {
 		textureMaterial.emissionTexture = LoadTexture(material, aiTextureType_EMISSION_COLOR);
 		textureMaterial.normalsTexture = LoadTexture(material, aiTextureType_NORMALS);
 
-		aiColor3D albedo = aiColor3D(-1.0f, -1.0f, -1.0f);
-		aiColor3D emission = aiColor3D(-1.0, -1.0, -1.0f);
-		float roughness = -1.0f;
-		float metalness = -1.0f;
+		aiColor3D albedo = aiColor3D(0.0f);
+		aiColor3D emission = aiColor3D(0.0f);
+		float roughness = 0.0f;
+		float metalness = 0.0f;
 
 		if (textureMaterial.albedoTexture.path.compare("src/Textures/DefaultTexture.png") == 0)	material->Get(AI_MATKEY_COLOR_DIFFUSE, albedo);
 		if (textureMaterial.emissionTexture.path.compare("src/Textures/DefaultTexture.png") == 0) material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);

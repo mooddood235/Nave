@@ -29,3 +29,13 @@ AABB::AABB(AABB aabb0, AABB aabb1) {
 		glm::max(aabb0.cornerMax.z, aabb1.cornerMax.z)
 	);
 }
+glm::vec3 AABB::GetCentroid() {
+	return (cornerMin + cornerMax) / 2.0f;
+}
+float AABB::GetSurfaceArea() {
+	float width = cornerMax.x - cornerMin.x;
+	float height = cornerMax.y - cornerMin.y;
+	float depth = cornerMax.z - cornerMin.z;
+
+	return 2.0f * width * depth + 2.0f * width * height + 2.0f * depth * height;
+}

@@ -80,14 +80,14 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("src/Textures/DefaultTexture.png");
+    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
-    camera.Translate(glm::vec3(0, 1.5, 5));
-    camera.Rotate(-15, glm::vec3(1, 0, 0), Space::local);
+    camera.Translate(glm::vec3(0, 1, 2));
+
     // Load BVH
-    BVH bvh = BVH::LanternBVH();
+    BVH bvh = BVH::DefaultBVH();
     bvh.SetSSBOs(rayTraceShader);
     bvh.MakeHandlesResident();
 
@@ -105,13 +105,14 @@ int main()
     std::uniform_int_distribution<int> distr(0, 1000000);
 
     //---------------------------------------------------
-    const unsigned int maxSamples = 8000;
+    const unsigned int maxSamples = 1000;
     unsigned int currSample = 1;
 
     glm::mat4 lastCameraModelMatrix = camera.GetModelMatrix();
     glm::mat4 lastCameraProjectionMatrix = camera.GetProjectionMatrix();
 
     while (!glfwWindowShouldClose(window)) {
+
         // Setup
         UpdateDeltaTime();
         glfwSwapBuffers(window);
@@ -133,6 +134,7 @@ int main()
         }
 
         if (currSample > maxSamples) continue;
+        
         std::cout << currSample << "/" << maxSamples << std::endl;
 
         // Ray trace

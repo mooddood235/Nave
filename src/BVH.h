@@ -33,6 +33,8 @@ private:
 	void GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<BVHNode> nodes, std::vector<TextureMaterial> textureMaterials);
 	unsigned int BuildBVH(std::vector<BVHNode>& nodes, BVHNode* leafNodes, unsigned int start, unsigned int end, AABB& AABBOut);
 
+	float ComputeSplitCost(BVHNode* leafNodes, unsigned int start, unsigned int split, unsigned int end);
+
 	static bool ComparatorX(BVHNode node0, BVHNode node1);
 	static bool ComparatorY(BVHNode node0, BVHNode node1);
 	static bool ComparatorZ(BVHNode node0, BVHNode node1);
