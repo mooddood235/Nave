@@ -94,7 +94,7 @@ unsigned int BVH::BuildBVH(std::vector<BVHNode>& nodes, BVHNode* leafNodes, unsi
 	AABB leftAABB;
 	AABB rightAABB;
 
-	unsigned int middle = start + (end - start) / 2;
+	//unsigned int middle = start + (end - start) / 2;
 
 	unsigned int leftIndex = BuildBVH(nodes, leafNodes, start, bestSplitIndex, leftAABB);
 	unsigned int rightIndex = BuildBVH(nodes, leafNodes, bestSplitIndex + 1, end, rightAABB);
@@ -216,7 +216,7 @@ float BVH::ComputeSplitCost(BVHNode* leafNodes, unsigned int start, unsigned int
 
 	return tTraversal + P_A * intersectionCost_A + P_B * intersectionCost_B;
 }
-BVH BVH::DefaultBVH() {
+BVH BVH::CameraBVH() {
 	Model quad = Model("Models/Quad/Quad.fbx");
 	quad.Rotate(-90, glm::vec3(1, 0, 0));
 	quad.Scale(glm::vec3(100), Space::local);
@@ -238,16 +238,11 @@ BVH BVH::LanternBVH() {
 	//lantern.Scale(glm::vec3(8));
 	return BVH({ lantern });
 }
-void BVH::Sort(BVHNode* nodes, unsigned int start, unsigned int end, unsigned int axis) {
-	bool (*comparators[])(BVHNode, BVHNode) { ComparatorX, ComparatorY, ComparatorZ };
+BVH BVH::FruitsBVH() {
+	Model fruits = Model("Models/Fruits/Fruits.fbx");
+	fruits.Rotate(-90, glm::vec3(1, 0, 0));
 
-	for (unsigned int i = start; i < end - 1; i++) {
-		for (unsigned int j = start; j < end - i - 1; j++) {
-			if (!comparators[axis](nodes[j], nodes[j + 1])) {
-				BVHNode temp = nodes[j + 1];
-				nodes[j + 1] = nodes[j];
-				nodes[j] = temp;
-			}
-		}
-	}
+
+	return BVH({ fruits });
 }
+

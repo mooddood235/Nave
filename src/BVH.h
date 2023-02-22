@@ -15,9 +15,10 @@ public:
 	void MakeHandlesNotResident();
 
 	// Preset BVHs
-	static BVH DefaultBVH();
+	static BVH CameraBVH();
 	static BVH CornellBVH();
 	static BVH LanternBVH();
+	static BVH FruitsBVH();
 
 private:
 	unsigned int verticesSSBO;
