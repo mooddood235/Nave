@@ -38,5 +38,7 @@ private:
 	static bool ComparatorX(BVHNode node0, BVHNode node1);
 	static bool ComparatorY(BVHNode node0, BVHNode node1);
 	static bool ComparatorZ(BVHNode node0, BVHNode node1);
+
+	static void Sort(BVHNode* nodes, unsigned int start, unsigned int end, unsigned int axis);
 };
 

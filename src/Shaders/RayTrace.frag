@@ -152,7 +152,7 @@ void main(){
 
 	vec3 radiance = vec3(1.0);
 
-	BVHNode stack[25];
+	uint stack[20];
 
 	for (uint depth = 1; depth <= maxDepth + 1; depth++){
 		if (depth == maxDepth + 1){
@@ -162,10 +162,10 @@ void main(){
 		HitInfo closestHit = NoHit;
 
 		uint stackSize = 1;
-		stack[0] = bvh[0];
+		stack[0] = 0;
 
 		while (stackSize > 0){
-			BVHNode node = stack[stackSize - 1];
+			BVHNode node = bvh[stack[stackSize - 1]];
 			stackSize--;
 
 			if (node.isLeaf == 0){
@@ -175,13 +175,20 @@ void main(){
 				HitInfo leftHitInfo = Hit_AABB(leftNode.cornerMin, leftNode.cornerMax, ray);
 				HitInfo rightHitInfo = Hit_AABB(rightNode.cornerMin, rightNode.cornerMax, ray);
 
-				if (leftHitInfo.didHit && leftHitInfo.t < closestHit.t){
-					stack[stackSize] = leftNode;
+				bool pushLeft = leftHitInfo.didHit && leftHitInfo.t < closestHit.t;
+				bool pushRight = rightHitInfo.didHit && rightHitInfo.t < closestHit.t;
+
+				if (pushLeft){
+					stack[stackSize] = node.left;
 					stackSize++;
 				}
-				if (rightHitInfo.didHit && rightHitInfo.t < closestHit.t){
-					stack[stackSize] = rightNode;
+				if (pushRight){
+					stack[stackSize] = node.right;
 					stackSize++;			
+				}
+				if (pushLeft && pushRight && leftHitInfo.t < rightHitInfo.t){
+					stack[stackSize - 1] = node.left;
+					stack[stackSize - 2] = node.right;
 				}
 			}
 			else{

@@ -56,8 +56,56 @@ BVH::BVH(std::vector<Model> models) {
 	
 	indexCount = indices.size();
 	nodeCount = nodes.size();
-	std::cout << nodeCount << std::endl;
 	GenerateSSBOs(vertices, indices, nodes, textureMaterials);
+}
+unsigned int BVH::BuildBVH(std::vector<BVHNode>& nodes, BVHNode* leafNodes, unsigned int start, unsigned int end, AABB& AABBOut) {
+	if (start > end) {
+		std::cout << "ERROR: start more than end." << std::endl;
+		exit(-1);
+	}
+	else if (start == end) {
+		nodes.push_back(leafNodes[start]);
+		AABBOut = leafNodes[start].aabb;
+		return nodes.size() - 1;
+	}
+	nodes.push_back(BVHNode());
+	unsigned int thisNodeIndex = nodes.size() - 1;
+
+	bool (*comparators[])(BVHNode, BVHNode) { ComparatorX, ComparatorY, ComparatorZ };
+
+	unsigned int bestSplitIndex = 0;
+	unsigned int bestAxis = 0;
+	float bestCost = INFINITY;
+
+	for (unsigned int axis = 0; axis <= 2; axis++) {
+		std::sort(leafNodes + start, leafNodes + end, comparators[axis]);
+		for (unsigned int splitIndex = start; splitIndex <= end; splitIndex++) {
+			float splitCost = ComputeSplitCost(leafNodes, start, splitIndex, end);
+
+			if (splitCost < bestCost) {
+				bestSplitIndex = splitIndex;
+				bestAxis = axis;
+				bestCost = splitCost;
+			}
+		}
+	}
+	std::sort(leafNodes + start, leafNodes + end, comparators[bestAxis]);
+
+	AABB leftAABB;
+	AABB rightAABB;
+
+	unsigned int middle = start + (end - start) / 2;
+
+	unsigned int leftIndex = BuildBVH(nodes, leafNodes, start, bestSplitIndex, leftAABB);
+	unsigned int rightIndex = BuildBVH(nodes, leafNodes, bestSplitIndex + 1, end, rightAABB);
+
+	AABBOut = AABB(leftAABB, rightAABB);
+
+	//std::cout << "CornerMin: " << AABBOut.cornerMin.x << "," << AABBOut.cornerMin.y << "," << AABBOut.cornerMin.z << " CornerMax: " << AABBOut.cornerMax.x << "," << AABBOut.cornerMax.y << "," << AABBOut.cornerMax.z << std::endl;
+
+	nodes[thisNodeIndex] = BVHNode(AABBOut, false, leftIndex, rightIndex);
+
+	return thisNodeIndex;
 }
 void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<BVHNode> nodes, std::vector<TextureMaterial> textureMaterials) {
 	glGenBuffers(1, &verticesSSBO);
@@ -118,54 +166,7 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
-unsigned int BVH::BuildBVH(std::vector<BVHNode>& nodes, BVHNode* leafNodes, unsigned int start, unsigned int end, AABB& AABBOut) {
-	if (start > end) {
-		std::cout << "ERROR: start more than end." << std::endl;
-		exit(-1);
-	}
-	else if (start == end) {
-		nodes.push_back(leafNodes[start]);
-		AABBOut = leafNodes[start].aabb;
-		return nodes.size() - 1;
-	}
-	nodes.push_back(BVHNode());
-	unsigned int thisNodeIndex = nodes.size() - 1;
 
-	bool (*comparators[])(BVHNode, BVHNode) { ComparatorX, ComparatorY, ComparatorZ };
-
-	unsigned int bestSplitIndex = 0;
-	unsigned int bestAxis = 0;
-	float bestCost = INFINITY;
-
-	for (unsigned int axis = 0; axis <= 2; axis++) {
-		std::sort(leafNodes + start, leafNodes + end, comparators[axis]);
-
-		for (unsigned int splitIndex = start; splitIndex <= end; splitIndex++) {
-			float splitCost = ComputeSplitCost(leafNodes, start, splitIndex, end);
-			
-			if (splitCost < bestCost) {
-				bestSplitIndex = splitIndex;
-				bestAxis = axis;
-				bestCost = splitCost;
-			}
-		}
-	}
-	std::sort(leafNodes + start, leafNodes + end, comparators[bestAxis]);
-
-	AABB leftAABB;
-	AABB rightAABB;
-	
-	unsigned int middle = start + (end - start) / 2;
-
-	unsigned int leftIndex = BuildBVH(nodes, leafNodes, start, bestSplitIndex, leftAABB);
-	unsigned int rightIndex = BuildBVH(nodes, leafNodes, bestSplitIndex + 1, end, rightAABB);
-
-	AABBOut = AABB(leftAABB, rightAABB);
-
-	nodes[thisNodeIndex] = BVHNode(AABBOut, false, leftIndex, rightIndex);
-
-	return thisNodeIndex;
-}
 void BVH::SetSSBOs(ShaderProgram rayTraceShader) {
 	rayTraceShader.BindStorageBlock("Vertices", 0);
 	rayTraceShader.BindStorageBlock("Indices", 1);
@@ -236,4 +237,17 @@ BVH BVH::LanternBVH() {
 	lantern.Rotate(-90, glm::vec3(1, 0, 0), Space::local);
 	//lantern.Scale(glm::vec3(8));
 	return BVH({ lantern });
+}
+void BVH::Sort(BVHNode* nodes, unsigned int start, unsigned int end, unsigned int axis) {
+	bool (*comparators[])(BVHNode, BVHNode) { ComparatorX, ComparatorY, ComparatorZ };
+
+	for (unsigned int i = start; i < end - 1; i++) {
+		for (unsigned int j = start; j < end - i - 1; j++) {
+			if (!comparators[axis](nodes[j], nodes[j + 1])) {
+				BVHNode temp = nodes[j + 1];
+				nodes[j + 1] = nodes[j];
+				nodes[j] = temp;
+			}
+		}
+	}
 }

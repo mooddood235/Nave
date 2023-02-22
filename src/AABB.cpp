@@ -29,6 +29,10 @@ AABB::AABB(AABB aabb0, AABB aabb1) {
 		glm::max(aabb0.cornerMax.z, aabb1.cornerMax.z)
 	);
 }
+AABB::AABB(glm::vec3 cornerMin, glm::vec3 cornerMax) {
+	this->cornerMin = cornerMin;
+	this->cornerMax = cornerMax;
+}
 glm::vec3 AABB::GetCentroid() {
 	return (cornerMin + cornerMax) / 2.0f;
 }

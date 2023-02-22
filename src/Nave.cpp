@@ -98,14 +98,14 @@ int main()
     rayTraceShader.SetUnsignedInt("camera.viewPortWidth", WINDOWWIDTH);
     rayTraceShader.SetUnsignedInt("camera.viewPortHeight", WINDOWHEIGHT);
 
-    rayTraceShader.SetUnsignedInt("maxDepth", 15);
+    rayTraceShader.SetUnsignedInt("maxDepth", 7);
     
     std::random_device rand_device;
     std::mt19937 generator(rand_device());
     std::uniform_int_distribution<int> distr(0, 1000000);
 
     //---------------------------------------------------
-    const unsigned int maxSamples = 1000;
+    const unsigned int maxSamples = 10000;
     unsigned int currSample = 1;
 
     glm::mat4 lastCameraModelMatrix = camera.GetModelMatrix();
