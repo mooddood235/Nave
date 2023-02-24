@@ -80,14 +80,14 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Farm.hdr");
+    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
     camera.Translate(glm::vec3(0, 1, 2));
 
     // Load BVH
-    BVH bvh = BVH::FruitsBVH();
+    BVH bvh = BVH::CameraBVH();
     bvh.SetSSBOs(rayTraceShader);
     bvh.MakeHandlesResident();
 
@@ -135,7 +135,7 @@ int main()
 
         if (currSample > maxSamples) continue;
         
-        std::cout << currSample << "/" << maxSamples << std::endl;
+        //std::cout << currSample << "/" << maxSamples << std::endl;
 
         // Ray trace
         glBindFramebuffer(GL_FRAMEBUFFER, rayTraceFBO);

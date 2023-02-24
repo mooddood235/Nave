@@ -42,16 +42,15 @@ struct Vertex{
 	uint64_t pad4;
 };
 struct BVHNode{
+	uint isLeaf;
+	uint left;
+	uint right;
+	float pad2;
+
 	vec3 cornerMin;
 	float pad0;
 	vec3 cornerMax;
 	float pad1;
-
-	uint isLeaf;
-	uint left;
-	uint right;
-
-	float pad2;
 };
 
 struct MathSphere{
@@ -207,9 +206,8 @@ void main(){
 				radiance *= closestHit.emission;
 				break;
 			}
-
 			radiance *= ComputeRadianceGGX(ray.direction, closestHit, wi);
-	
+
 			ray.origin = closestHit.position + closestHit.normal * 0.0001;
 			ray.direction = wi;
 		}
@@ -259,29 +257,31 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
     // At this stage we can compute t to find out where the intersection point is on the line.
     float t = f * dot(edge2, q);
 
-	if (a > -EPSILON && a < EPSILON || u < 0.0 || u > 1.0 || t <= EPSILON) return NoHit;
+	if (a > -EPSILON && a < EPSILON || u < 0.0 || u > 1.0 || t <= EPSILON || dot(v0.normal, ray.direction) > 0) return NoHit;
 
 	float w = 1.0 - u - v;
 
 	vec2 uv = v0.uv * w + v1.uv * u + v2.uv * v;
 
-	mat3 TBN = transpose(mat3(
+
+	mat3 TBN = mat3(
 		normalize(v0.tangent * w + v1.tangent * u + v2.tangent * v),
 		normalize(v0.biTangent * w + v1.biTangent * u + v2.biTangent * v),
-		normalize(v0.normal * w + v1.normal * u + v2.normal * v))
+		normalize(v0.normal * w + v1.normal * u + v2.normal * v)
 	);
 
 	vec3 albedoProperty = textureMaterials[textureMaterialIndex].albedo;
 	float roughnessProperty = textureMaterials[textureMaterialIndex].roughness;
 	float metalnessProperty = textureMaterials[textureMaterialIndex].metalness;
 	vec3 emissionProperty = textureMaterials[textureMaterialIndex].emission;
+	
+	vec3 albedo = textureLod(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv, 0).rgb + albedoProperty;
+	float roughness = textureLod(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv, 0).r + roughnessProperty;
+	float metalness = textureLod(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv, 0).r + metalnessProperty;
+	vec3 emission = textureLod(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv, 0).rgb + emissionProperty;
+	vec3 textureNormal = textureLod(sampler2D(textureMaterials[textureMaterialIndex].normalTexture), uv, 0).rgb * 2.0 - 1.0;
 
-	vec3 albedo = texture(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv).rgb + albedoProperty;
-	float roughness = texture(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv).r + roughnessProperty;
-	float metalness = texture(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv).r + metalnessProperty;
-	vec3 emission = texture(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv).rgb + emissionProperty;
-	vec3 normal = texture(sampler2D(textureMaterials[textureMaterialIndex].normalTexture), uv).rgb * 2.0 - 1.0;
-	normal = normalize(inverse(TBN) * normal);
+	vec3 normal = normalize(TBN * textureNormal);
 
     return HitInfo(true, t, At(ray, t), normal, albedo, roughness, metalness, emission);
 }
@@ -297,7 +297,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
     if (tmax >= tmin && tmax > 0){
 		HitInfo hitInfo;
 		hitInfo.didHit = true;
-		hitInfo.t = tmin;
+		hitInfo.t = clamp(tmin, 0, tmin);
 		return hitInfo;
 	}
 	return NoHit;
@@ -438,7 +438,7 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 
 		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
 		float G = G_smith(n, wi, v, a);
-	
+		
 		return F * G / (G_GGX(n, v, a) + 0.00001);
 	}
 	else{

@@ -133,13 +133,13 @@ void BVH::GenerateSSBOs(std::vector<Vertex> vertices, std::vector<unsigned int> 
 	glBufferData(GL_SHADER_STORAGE_BUFFER, nodes.size() * 48, NULL, GL_STATIC_DRAW);
 
 	for (unsigned int i = 0; i < nodes.size(); i++) {
-		unsigned int isLeaf = unsigned int(nodes[i].isLeaf);
+		unsigned int isLeaf = nodes[i].isLeaf ? 1 : 0;
 
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48, 12, &(nodes[i].aabb.cornerMin));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 16, 12, &(nodes[i].aabb.cornerMax));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 2 * 16, 4, &(isLeaf));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 2 * 16 + 4, 4, &(nodes[i].left));
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 2 * 16 + 8, 4, &(nodes[i].right));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48, 4, &isLeaf);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 4, 4, &(nodes[i].left));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 8, 4, &(nodes[i].right));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 16, 12, &(nodes[i].aabb.cornerMin));
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, i * 48 + 32, 12, &(nodes[i].aabb.cornerMax));
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, textureMaterialsSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, textureMaterials.size() * 96, NULL, GL_STATIC_DRAW);
@@ -217,15 +217,11 @@ float BVH::ComputeSplitCost(BVHNode* leafNodes, unsigned int start, unsigned int
 	return tTraversal + P_A * intersectionCost_A + P_B * intersectionCost_B;
 }
 BVH BVH::CameraBVH() {
-	Model quad = Model("Models/Quad/Quad.fbx");
-	quad.Rotate(-90, glm::vec3(1, 0, 0));
-	quad.Scale(glm::vec3(100), Space::local);
-
 	Model camera = Model("Models/Camera/Camera.fbx");
 	camera.Rotate(-90, glm::vec3(1, 0, 0));
 	camera.Rotate(180, glm::vec3(0, 1, 0));
 	camera.Scale(glm::vec3(15));
-	return BVH({ camera, quad });
+	return BVH({ camera });
 }
 BVH BVH::CornellBVH() {
 	Model cornell = Model("Models/Cornell/Cornell.fbx");
@@ -241,7 +237,6 @@ BVH BVH::LanternBVH() {
 BVH BVH::FruitsBVH() {
 	Model fruits = Model("Models/Fruits/Fruits.fbx");
 	fruits.Rotate(-90, glm::vec3(1, 0, 0));
-
 
 	return BVH({ fruits });
 }
