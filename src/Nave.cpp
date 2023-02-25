@@ -80,14 +80,14 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Shelter.hdr");
+    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Farm.hdr");
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
     camera.Translate(glm::vec3(0, 1, 2));
 
     // Load BVH
-    BVH bvh = BVH::CameraBVH();
+    BVH bvh = BVH::FruitsBVH();
     bvh.SetSSBOs(rayTraceShader);
     bvh.MakeHandlesResident();
 

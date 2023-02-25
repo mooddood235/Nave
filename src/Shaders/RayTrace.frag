@@ -142,10 +142,12 @@ uniform uint nodeCount;
 void main(){
 	_seed = seed;
 
+	vec2 multisampleUV = vec2(uv.x + (Rand() * 2.0 - 1.0) / camera.viewPortWidth, uv.y + (Rand() * 2.0 - 1.0) / camera.viewPortHeight);
+
 	vec3 worldUV = camera.position + 
 	-camera.zAxis * camera.focalLength + 
-	camera.xAxis * float(camera.viewPortWidth) / 2.0 * uv.x +
-	camera.yAxis * float(camera.viewPortHeight) / 2.0 * uv.y;
+	camera.xAxis * float(camera.viewPortWidth) / 2.0 * multisampleUV.x +
+	camera.yAxis * float(camera.viewPortHeight) / 2.0 * multisampleUV.y;
 
 	Ray ray = Ray(camera.position, normalize(worldUV - camera.position));
 
@@ -263,11 +265,12 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
 
 	vec2 uv = v0.uv * w + v1.uv * u + v2.uv * v;
 
+	vec3 trueNormal = normalize(v0.normal * w + v1.normal * u + v2.normal * v);
 
 	mat3 TBN = mat3(
 		normalize(v0.tangent * w + v1.tangent * u + v2.tangent * v),
 		normalize(v0.biTangent * w + v1.biTangent * u + v2.biTangent * v),
-		normalize(v0.normal * w + v1.normal * u + v2.normal * v)
+		trueNormal
 	);
 
 	vec3 albedoProperty = textureMaterials[textureMaterialIndex].albedo;
@@ -275,11 +278,13 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
 	float metalnessProperty = textureMaterials[textureMaterialIndex].metalness;
 	vec3 emissionProperty = textureMaterials[textureMaterialIndex].emission;
 	
-	vec3 albedo = textureLod(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv, 0).rgb + albedoProperty;
-	float roughness = textureLod(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv, 0).r + roughnessProperty;
-	float metalness = textureLod(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv, 0).r + metalnessProperty;
-	vec3 emission = textureLod(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv, 0).rgb + emissionProperty;
-	vec3 textureNormal = textureLod(sampler2D(textureMaterials[textureMaterialIndex].normalTexture), uv, 0).rgb * 2.0 - 1.0;
+	float mipMapLevel = 0;
+
+	vec3 albedo = textureLod(sampler2D(textureMaterials[textureMaterialIndex].albedoTexture), uv, mipMapLevel).rgb + albedoProperty;
+	float roughness = textureLod(sampler2D(textureMaterials[textureMaterialIndex].roughnessTexture), uv, mipMapLevel).r + roughnessProperty;
+	float metalness = textureLod(sampler2D(textureMaterials[textureMaterialIndex].metalnessTexture), uv, mipMapLevel).r + metalnessProperty;
+	vec3 emission = textureLod(sampler2D(textureMaterials[textureMaterialIndex].emissionTexture), uv, mipMapLevel).rgb + emissionProperty;
+	vec3 textureNormal = textureLod(sampler2D(textureMaterials[textureMaterialIndex].normalTexture), uv, mipMapLevel).rgb * 2.0 - 1.0;
 
 	vec3 normal = normalize(TBN * textureNormal);
 
