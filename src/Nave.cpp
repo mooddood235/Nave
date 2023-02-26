@@ -80,25 +80,34 @@ int main()
     Model renderQuad = Model("Models/Quad/Quad.fbx");
 
     // Load environment maps
-    EnvironmentMap environmentMap = EnvironmentMap("HDRIs/Farm.hdr");
+    std::vector<EnvironmentMap> environmentMaps{
+        EnvironmentMap("HDRIs/Black.hdr"),
+        EnvironmentMap("HDRIs/Shelter.hdr"),
+        EnvironmentMap("HDRIs/Farm.hdr"),
+        EnvironmentMap("HDRIs/Studio.hdr"),
+        EnvironmentMap("HDRIs/Park.hdr")
+    };
     
     // Load camera
     Camera camera = Camera(45, 0.1, 100);
     camera.Translate(glm::vec3(0, 1, 2));
 
-    // Load BVH
-    BVH bvh = BVH::FruitsBVH();
-    bvh.SetSSBOs(rayTraceShader);
-    bvh.MakeHandlesResident();
-
-    MathSphere mathSphere = MathSphere();
+    // Load BVHs
+    std::vector<BVH> bvhs{
+        BVH::CornellBVH(),
+        BVH::CameraBVH(),
+        BVH::FruitsBVH(),
+        BVH::LanternBVH()
+    };
+    bvhs[0].SetSSBOs(rayTraceShader);
+    bvhs[0].MakeHandlesResident();
 
     // Set pre-runtime uniforms
 
     rayTraceShader.SetUnsignedInt("camera.viewPortWidth", WINDOWWIDTH);
     rayTraceShader.SetUnsignedInt("camera.viewPortHeight", WINDOWHEIGHT);
 
-    rayTraceShader.SetUnsignedInt("maxDepth", 7);
+    rayTraceShader.SetUnsignedInt("maxDepth", 10);
     
     std::random_device rand_device;
     std::mt19937 generator(rand_device());
@@ -111,8 +120,13 @@ int main()
     glm::mat4 lastCameraModelMatrix = camera.GetModelMatrix();
     glm::mat4 lastCameraProjectionMatrix = camera.GetProjectionMatrix();
 
-    while (!glfwWindowShouldClose(window)) {
+    unsigned int bvhsIndex = 0;
+    unsigned int enviromentMapsIndex = 0;
 
+    bool mouse1Pressed = false;
+    bool mouse2Pressed = false;
+
+    while (!glfwWindowShouldClose(window)) {
         // Setup
         UpdateDeltaTime();
         glfwSwapBuffers(window);
@@ -122,12 +136,36 @@ int main()
         
         camera.ProcessInput();
 
+        glBindFramebuffer(GL_FRAMEBUFFER, rayTraceFBO);
+
+        if (!mouse1Pressed && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
+            bvhs[bvhsIndex].MakeHandlesNotResident();
+
+            bvhsIndex = (bvhsIndex + 1) % bvhs.size();
+
+            bvhs[bvhsIndex].SetSSBOs(rayTraceShader);
+            bvhs[bvhsIndex].MakeHandlesResident();
+
+            currSample = 1;
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            mouse1Pressed = true;
+        }
+        if (!mouse2Pressed && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS) {
+            enviromentMapsIndex = (enviromentMapsIndex + 1) % environmentMaps.size();
+
+            currSample = 1;
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            mouse2Pressed = true;
+        }
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_RELEASE) mouse1Pressed = false;
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_RELEASE) mouse2Pressed = false;
+
         if (lastCameraModelMatrix != camera.GetModelMatrix() || lastCameraProjectionMatrix != camera.GetProjectionMatrix()) {
             currSample = 1;
 
-            glBindFramebuffer(GL_FRAMEBUFFER, rayTraceFBO);
             glClear(GL_COLOR_BUFFER_BIT);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             lastCameraModelMatrix = camera.GetModelMatrix();
             lastCameraProjectionMatrix = camera.GetProjectionMatrix();
@@ -138,8 +176,6 @@ int main()
         //std::cout << currSample << "/" << maxSamples << std::endl;
 
         // Ray trace
-        glBindFramebuffer(GL_FRAMEBUFFER, rayTraceFBO);
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, renderTextures[0]);
         rayTraceShader.SetInt("cumulativeRenderTexture", 0);
@@ -155,7 +191,7 @@ int main()
         rayTraceShader.SetFloat("camera.focalLength", camera.GetFocalLength());
 
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, environmentMap.GetEnvironmentMap());
+        glBindTexture(GL_TEXTURE_2D, environmentMaps[enviromentMapsIndex].GetEnvironmentMap());
         rayTraceShader.SetInt("environmentMap", 1);
 
         rayTraceShader.Use();

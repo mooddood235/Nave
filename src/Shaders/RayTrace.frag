@@ -259,7 +259,7 @@ HitInfo Hit_Triangle(Vertex v0, Vertex v1, Vertex v2, Ray ray, uint textureMater
     // At this stage we can compute t to find out where the intersection point is on the line.
     float t = f * dot(edge2, q);
 
-	if (a > -EPSILON && a < EPSILON || u < 0.0 || u > 1.0 || t <= EPSILON || dot(v0.normal, ray.direction) > 0) return NoHit;
+	if (a > -EPSILON && a < EPSILON || u < 0.0 || u > 1.0 || t <= EPSILON) return NoHit;
 
 	float w = 1.0 - u - v;
 
