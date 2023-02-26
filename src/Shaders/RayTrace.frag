@@ -447,12 +447,12 @@ vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 		return F * G / (G_GGX(n, v, a) + 0.00001);
 	}
 	else{
-		wi = SampleHemisphere(n);
+		wi = CosineSampleHemisphere(n);
 		vec3 h = normalize(v + wi);
 
 		vec3 lambart = hitInfo.albedo / PI;
 
-		float pdf = 1.0 / (2.0 * PI) * (1.0 - specChance);
+		float pdf = (sdot(n, wi) / PI) * (1.0 - specChance);
 
 		vec3 kD = (1.0 - F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness))) * (1.0 - hitInfo.metalness);
 

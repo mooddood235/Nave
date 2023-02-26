@@ -81,11 +81,11 @@ int main()
 
     // Load environment maps
     std::vector<EnvironmentMap> environmentMaps{
-        EnvironmentMap("HDRIs/Black.hdr"),
         EnvironmentMap("HDRIs/Shelter.hdr"),
         EnvironmentMap("HDRIs/Farm.hdr"),
         EnvironmentMap("HDRIs/Studio.hdr"),
-        EnvironmentMap("HDRIs/Park.hdr")
+        EnvironmentMap("HDRIs/Park.hdr"),
+        EnvironmentMap("HDRIs/Black.hdr")
     };
     
     // Load camera
@@ -226,10 +226,8 @@ void InitGLFW() {
     WINDOWWIDTH = videoMode->width;
     WINDOWHEIGHT = videoMode->height;
 
-    WINDOWWIDTH = 1920;
-    WINDOWHEIGHT = 1080;
 
-    window = glfwCreateWindow(WINDOWWIDTH , WINDOWHEIGHT, "Nave", NULL, NULL);
+    window = glfwCreateWindow(WINDOWWIDTH , WINDOWHEIGHT, "Nave", monitor, NULL);
 
     if (!window) {
         std::cout << "ERROR: Failed to create GLFW window" << std::endl;
