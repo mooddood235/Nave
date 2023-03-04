@@ -83,6 +83,7 @@ struct TextureMaterial{
 // Constants
 const float PI = 3.14159265359;
 const HitInfo NoHit = HitInfo(false, 1. / 0., vec3(0), vec3(0), vec3(0), 0, 0, vec3(0));
+const float EPSILON = 0.000001;
 
 // Helper functions
 float Rand();
@@ -96,7 +97,7 @@ float sdot(vec3 v0, vec3 v1);
 // GGX distribution
 vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi);
 float D_GGX(vec3 n, vec3 m, float a);
-float G_GGX(vec3 n, vec3 x, float a);
+float G_GGX(vec3 n, vec3 v, float a);
 float G_smith(vec3 n, vec3 l, vec3 v, float a);
 vec3 F_schlick(vec3 v, vec3 h, vec3 F0);
 vec3 ImportanceSampleGGX(vec3 n, float a);
@@ -352,9 +353,7 @@ mat3 GetTangentSpace(vec3 normal){
     vec3 binormal = normalize(cross(normal, tangent));
     return mat3(tangent, binormal, normal);
 }
-float Den(float value){
-	return max(0.0001, value);
-}
+
 float D_GGX(vec3 n, vec3 m, float a){	
 	float a2 = a * a;
 
@@ -366,23 +365,22 @@ float D_GGX(vec3 n, vec3 m, float a){
 	denominator *= denominator;
 	denominator *= PI;
 
-	return numerator / Den(denominator);
+	return min(numerator / denominator, 1.0);
 };
-float G_GGX(vec3 n, vec3 x, float a){
+float G_GGX(vec3 n, vec3 v, float a){
 	float a2 = a * a;
 
-	float ndotx = sdot(n, x);
-	float ndotx2 = ndotx * ndotx;
+	float ndotv = sdot(n, v);
+	float ndotv2 = ndotv * ndotv;
 
-	float numerator = 2.0 * ndotx;
-	float denominator = ndotx + sqrt(a2 + (1.0 - a2) * ndotx2);
+	float numerator = 2.0 * ndotv;
+	float denominator = ndotv + sqrt(a2 + (1.0 - a2) * ndotv2);
 
-	return numerator / Den(denominator);
+	return numerator / denominator;
 };
 float G_smith(vec3 n, vec3 l, vec3 v, float a){
 	return G_GGX(n, l, a) * G_GGX(n, v, a);
-};
-
+}
 vec3 F_schlick(vec3 v, vec3 h, vec3 F0){
 	float vdoth = sdot(v, h);
 
@@ -428,34 +426,34 @@ vec3 ImportanceSampleGGXVNDF(vec3 n, vec3 v, float a)
 vec3 ComputeRadianceGGX(vec3 wo, HitInfo hitInfo, out vec3 wi){
 	const float specChance = 0.5;
 
-	float a = clamp(hitInfo.roughness * hitInfo.roughness, 0.0, 1.0);
+	float a = clamp(hitInfo.roughness * hitInfo.roughness, EPSILON, 1.0);
 
 	vec3 n = hitInfo.normal;
 	vec3 v = -wo;
 
+	vec3 m;
+
 	if (Rand() <= specChance){
-		vec3 m = ImportanceSampleGGXVNDF(n, v, a);
-
+		m = ImportanceSampleGGXVNDF(n, v, a);
 		wi = reflect(wo, m);
-		vec3 h = normalize(v + wi);
-
-		if (dot(n, wi) < 0.0) return vec3(0.0);
-
-		vec3 F = F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness));
-		float G = G_smith(n, wi, v, a);
-		
-		return F * G / (G_GGX(n, v, a) + 0.00001) / specChance;
 	}
 	else{
 		wi = CosineSampleHemisphere(n);
-		vec3 h = normalize(v + wi);
-
-		vec3 lambart = hitInfo.albedo / PI;
-
-		float pdf = (sdot(n, wi) / PI) * (1.0 - specChance);
-
-		vec3 kD = (1.0 - F_schlick(v, h, mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness))) * (1.0 - hitInfo.metalness);
-
-		return kD * lambart / pdf * sdot(n, wi);
+		m = normalize(-wo + wi);
 	}
+
+	vec3 h = normalize(v + wi);
+
+	vec3 F0 = mix(vec3(0.04), hitInfo.albedo, hitInfo.metalness);
+
+	vec3 specular = D_GGX(n, h, a) * F_schlick(wi, h, F0) * G_smith(n, wi, v, a) / (4 * sdot(v, n) * sdot(wi, n) + EPSILON);
+	//vec3 lambertian =  (1.0 - hitInfo.metalness) * (1.0 - F_schlick(wi, n, F0)) * (1.0 - F_schlick(v, n, F0)) * hitInfo.albedo / PI;
+	vec3 lambertian = (1.0 - hitInfo.metalness) * (1.0 - F_schlick(v, h, F0)) * hitInfo.albedo / PI;
+
+	float pdfLambertian = (sdot(n, wi) / PI) * (1.0 - specChance);
+	float pdfSpecular = D_GGX(n, m, a) / (4.0 * sdot(v, m) + EPSILON) * specChance;
+
+	float pdf = (pdfLambertian + pdfSpecular + EPSILON);
+
+	return (lambertian + specular) / pdf * sdot(n, wi);
 }

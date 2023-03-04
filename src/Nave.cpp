@@ -226,8 +226,10 @@ void InitGLFW() {
     WINDOWWIDTH = videoMode->width;
     WINDOWHEIGHT = videoMode->height;
 
+    WINDOWWIDTH = 1920;
+    WINDOWHEIGHT = 1080;
 
-    window = glfwCreateWindow(WINDOWWIDTH , WINDOWHEIGHT, "Nave", monitor, NULL);
+    window = glfwCreateWindow(WINDOWWIDTH , WINDOWHEIGHT, "Nave", NULL, NULL);
 
     if (!window) {
         std::cout << "ERROR: Failed to create GLFW window" << std::endl;
